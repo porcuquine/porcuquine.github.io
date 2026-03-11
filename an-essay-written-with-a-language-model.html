@@ -1,0 +1,533 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>An Essay Written with a Language Model</title>
+  <style>
+    :root {
+      --paper: #f5f1e8;
+      --ink: #1f1b16;
+      --muted: #6b655b;
+      --line: rgba(78, 62, 39, 0.58);
+      --line-strong: rgba(78, 62, 39, 0.88);
+      --focus: rgba(143, 115, 80, 0.22);
+      --button: #efe8d8;
+      --button-hover: #e6ddca;
+      --shadow: rgba(34, 28, 19, 0.08);
+      --field: rgba(255, 255, 255, 0.64);
+      --field-border: rgba(73, 61, 43, 0.18);
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+    }
+
+    body {
+      min-height: 100vh;
+    }
+
+    main {
+      max-width: 54rem;
+      margin: 0 auto;
+      padding: 4.5rem 1.5rem 3rem;
+    }
+
+    .disclosure {
+      font-size: 1.08rem;
+      line-height: 1.62;
+      margin: 0 0 1.6rem;
+      max-width: 43rem;
+    }
+
+    .essay {
+      background: rgba(255, 255, 255, 0.22);
+      border: 1px solid rgba(73, 61, 43, 0.12);
+      box-shadow: 0 12px 28px var(--shadow);
+      padding: 1.55rem 1.7rem 1.65rem;
+      border-radius: 0.9rem;
+    }
+
+    .essay p {
+      font-size: clamp(1.17rem, 1.9vw, 1.36rem);
+      line-height: 1.84;
+      margin: 0;
+      word-break: normal;
+      overflow-wrap: normal;
+      white-space: normal;
+      text-wrap: wrap;
+      hyphens: none;
+    }
+
+    .expansion-anchor {
+      display: inline;
+      color: inherit;
+      font: inherit;
+      line-height: inherit;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      background: none;
+      cursor: pointer;
+      white-space: normal;
+      text-align: inherit;
+      vertical-align: baseline;
+      text-decoration-line: underline;
+      text-decoration-style: solid;
+      text-decoration-color: var(--line);
+      text-decoration-thickness: 1.45px;
+      text-underline-offset: 0.14em;
+      border-radius: 0;
+      touch-action: manipulation;
+    }
+
+    .expansion-anchor:hover,
+    .expansion-anchor:focus-visible {
+      text-decoration-color: var(--line-strong);
+      outline: 2px solid var(--focus);
+      outline-offset: 2px;
+    }
+
+    .expansion-anchor[data-expanded="true"] {
+      text-decoration-color: var(--line-strong);
+      text-decoration-thickness: 1.65px;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+
+    .control {
+      appearance: none;
+      border: 1px solid rgba(73, 61, 43, 0.18);
+      background: var(--button);
+      color: var(--ink);
+      font: inherit;
+      font-size: 0.94rem;
+      line-height: 1;
+      padding: 0.72rem 0.98rem;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: background-color 140ms ease, transform 140ms ease;
+    }
+
+    .control:hover,
+    .control:focus-visible {
+      background: var(--button-hover);
+      outline: none;
+      transform: translateY(-1px);
+    }
+
+    .status {
+      font-size: 0.9rem;
+      line-height: 1.4;
+      color: var(--muted);
+      min-height: 1.4em;
+    }
+
+    .share {
+      margin-top: 0.85rem;
+    }
+
+    .share[hidden] {
+      display: none;
+    }
+
+    .share-url {
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid var(--field-border);
+      background: var(--field);
+      color: var(--ink);
+      font: inherit;
+      font-size: 0.92rem;
+      line-height: 1.45;
+      padding: 0.7rem 0.8rem;
+      border-radius: 0.6rem;
+    }
+
+    .share-url:focus {
+      outline: 2px solid var(--focus);
+      outline-offset: 1px;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    @media (max-width: 640px) {
+      main {
+        padding-top: 3.2rem;
+      }
+
+      .essay {
+        padding: 1.18rem 1.1rem 1.24rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <p class="disclosure">I would not advise anyone to unknowingly read an essay written with a language model.</p>
+
+    <section class="essay" aria-label="An essay written with a language model.">
+      <div id="essay-root"></div>
+      <div class="controls" aria-label="Prototype controls">
+        <button id="reset" class="control" type="button">Reset</button>
+        <button id="copy-link" class="control" type="button">Copy link to this path</button>
+        <span id="status" class="status" aria-live="polite"></span>
+      </div>
+      <div id="share" class="share" hidden>
+        <label class="sr-only" for="share-url">Shareable link</label>
+        <input id="share-url" class="share-url" type="text" readonly spellcheck="false" autocomplete="off" />
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const rootText = 'A narrow aperture, when [[set-just-right]], can project a whole scene sharply. A language model writes inside [[frame]]. Within such a chamber, [[exactness]]. Left there too long, [[omitted]]. The operator\'s task, like the scientist\'s and the artist\'s, is to find [[aperture]]. Attention obeys the same geometry.';
+
+    const nodes = {
+      'set-just-right': {
+        text: 'set just right',
+        after: '—[[darkness]]; [[whole-scene]]—'
+      },
+      'darkness': {
+        text: 'dark enough for edges to hold',
+        after: ', since an image resolves by excluding stray light; [[brightness]]'
+      },
+      'brightness': {
+        text: 'opened too quickly, it brightens before it resolves',
+        after: ', which is how machine prose sprawls, admitting more language before the image has formed'
+      },
+      'whole-scene': {
+        text: 'still open enough for the whole scene to enter under one severe limit',
+        after: ', because the aperture narrows the light without fragmenting the world'
+      },
+
+      'frame': {
+        text: 'a frame cut from wider context',
+        after: ': [[prompt]]; [[latent]]; and [[operator]]'
+      },
+      'prompt': {
+        text: 'the immediate task and the material kept within reach',
+        after: ', from which local coherence takes its bearings'
+      },
+      'latent': {
+        text: 'a training prior broad enough to matter and too diffuse to arrange at will',
+        after: ', nearer to climate than furniture'
+      },
+      'operator': {
+        text: 'an operator standing at the gate of the wider field',
+        after: ', choosing [[cut]] and noticing [[spill]]'
+      },
+      'cut': {
+        text: 'the cut',
+        after: ' (what enters and in what order)'
+      },
+      'spill': {
+        text: 'the spill',
+        after: ' (when the excluded world has begun to show through)'
+      },
+
+      'exactness': {
+        text: 'exactness is bought with exclusion',
+        after: ': [[ends]]; [[signals]]; and [[score]]'
+      },
+      'ends': {
+        text: 'ends must already be fixed before means can be optimized',
+        after: ', since no procedure discovers what it should maximize from nowhere'
+      },
+      'signals': {
+        text: 'signals must already be weighted before evidence can decide cleanly',
+        after: ', because the world does not label its own importance'
+      },
+      'score': {
+        text: 'a score must already exist before one outcome can count as better than another',
+        after: '; [[criterion]]'
+      },
+      'criterion': {
+        text: 'formal rationality inherits its criterion',
+        after: ''
+      },
+
+      'omitted': {
+        text: 'the omitted returns as consequence',
+        after: ': [[blind-edge]]; [[wider]]; and [[horizon]]'
+      },
+      'blind-edge': {
+        text: 'every intelligence throws a blind edge',
+        after: ', and irrationality gathers where useful closure begins to falsify the case'
+      },
+      'wider': {
+        text: 'a wider frame gains force by answering for what the narrower left out',
+        after: '; [[global]]'
+      },
+      'global': {
+        text: 'here global means only wider than the present closure',
+        after: ', with no promise of a final or universal view'
+      },
+      'horizon': {
+        text: 'large irrationalities often begin as small rationalities held past their horizon',
+        after: '; [[small-world]]'
+      },
+      'small-world': {
+        text: 'a small world has been carried past the scale that gave it sense',
+        after: ''
+      },
+
+      'aperture': {
+        text: 'the aperture that lets the image resolve',
+        after: ': [[science]]; [[art]]; and [[attention]]'
+      },
+      'science': {
+        text: 'science idealizes and then widens when the neglected term begins to govern',
+        after: ', which is why method depends on [[feeling-turn]]'
+      },
+      'feeling-turn': {
+        text: 'feeling when exclusion clarifies and when it falsifies',
+        after: ''
+      },
+      'art': {
+        text: 'art crops, delays, and releases until a larger relation can be felt',
+        after: ', with form deciding [[timing]]'
+      },
+      'timing': {
+        text: 'what arrives now, what later, and what never',
+        after: ''
+      },
+      'attention': {
+        text: 'attention itself can be trained to close and reopen on cue',
+        after: ', while work with a model merely externalizes [[discipline]]'
+      },
+      'discipline': {
+        text: 'a discipline the mind already practices on its own material',
+        after: ''
+      }
+    };
+
+    const essayRoot = document.getElementById('essay-root');
+    const shareRoot = document.getElementById('share');
+    const shareInput = document.getElementById('share-url');
+    const statusRoot = document.getElementById('status');
+    const expanded = new Set();
+    const parents = {};
+    const children = {};
+    const order = {};
+    let visitIndex = 0;
+
+    function tokenMatches(text) {
+      return Array.from(text.matchAll(/\[\[([a-z0-9-]+)\]\]/g));
+    }
+
+    function registerNodeOrder(id) {
+      if (!(id in order)) order[id] = visitIndex++;
+    }
+
+    function indexText(text, parentId = null) {
+      for (const match of tokenMatches(text)) {
+        const id = match[1];
+        const node = nodes[id];
+        if (!node) throw new Error(`Unknown node id: ${id}`);
+        registerNodeOrder(id);
+        if (parentId) {
+          if (parents[id] && parents[id] !== parentId) throw new Error(`Node ${id} has more than one parent.`);
+          parents[id] = parentId;
+          if (!children[parentId]) children[parentId] = [];
+          if (!children[parentId].includes(id)) children[parentId].push(id);
+        }
+        if (node.after) indexText(node.after, id);
+      }
+    }
+
+    indexText(rootText, null);
+
+    function sortIds(ids) {
+      return [...ids].sort((a, b) => (order[a] ?? 0) - (order[b] ?? 0));
+    }
+
+    function isExpandable(id) {
+      const node = nodes[id];
+      return !!(node && typeof node.after === 'string' && node.after.length > 0);
+    }
+
+    function buildShareUrl() {
+      const url = new URL(window.location.href);
+      const ids = sortIds(expanded);
+      url.hash = ids.length ? ids.join(',') : '';
+      return url.toString();
+    }
+
+    function updateHash() {
+      const nextUrl = buildShareUrl();
+      try {
+        history.replaceState(null, '', nextUrl);
+      } catch (error) {
+        window.location.hash = new URL(nextUrl).hash;
+      }
+      shareInput.value = buildShareUrl();
+    }
+
+    function expandWithAncestors(id) {
+      let current = id;
+      while (current) {
+        if (isExpandable(current)) expanded.add(current);
+        current = parents[current];
+      }
+    }
+
+    function collapseBranch(id) {
+      const stack = [id];
+      while (stack.length) {
+        const current = stack.pop();
+        expanded.delete(current);
+        const kids = children[current] || [];
+        for (const child of kids) stack.push(child);
+      }
+    }
+
+    function loadHash() {
+      expanded.clear();
+      const raw = decodeURIComponent(window.location.hash.replace(/^#/, '').trim());
+      if (!raw) {
+        shareInput.value = buildShareUrl();
+        return;
+      }
+      raw.split(',').map(part => part.trim()).filter(Boolean).forEach(id => {
+        if (nodes[id]) expandWithAncestors(id);
+      });
+      shareInput.value = buildShareUrl();
+    }
+
+    function clearStatusSoon(message) {
+      statusRoot.textContent = message;
+      window.clearTimeout(clearStatusSoon.timer);
+      clearStatusSoon.timer = window.setTimeout(() => {
+        statusRoot.textContent = '';
+      }, 2200);
+    }
+
+    function createAnchor(id) {
+      const node = nodes[id];
+      const isExpanded = expanded.has(id);
+      const span = document.createElement('span');
+      span.className = 'expansion-anchor';
+      span.dataset.id = id;
+      span.dataset.expanded = isExpanded ? 'true' : 'false';
+      span.setAttribute('role', 'button');
+      span.setAttribute('tabindex', '0');
+      span.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+      span.setAttribute('aria-label', (isExpanded ? 'Collapse ' : 'Expand ') + node.text);
+      span.textContent = node.text;
+      return span;
+    }
+
+    function renderInlineFragment(text) {
+      const fragment = document.createDocumentFragment();
+      let cursor = 0;
+      for (const match of tokenMatches(text)) {
+        const id = match[1];
+        const index = match.index ?? 0;
+        if (index > cursor) fragment.appendChild(document.createTextNode(text.slice(cursor, index)));
+        const node = nodes[id];
+        if (isExpandable(id)) {
+          fragment.appendChild(createAnchor(id));
+          if (expanded.has(id) && node.after) fragment.appendChild(renderInlineFragment(node.after));
+        } else {
+          fragment.appendChild(document.createTextNode(node.text));
+        }
+        cursor = index + match[0].length;
+      }
+      if (cursor < text.length) fragment.appendChild(document.createTextNode(text.slice(cursor)));
+      return fragment;
+    }
+
+    function render() {
+      const paragraph = document.createElement('p');
+      paragraph.appendChild(renderInlineFragment(rootText));
+      essayRoot.replaceChildren(paragraph);
+      shareInput.value = buildShareUrl();
+    }
+
+    function toggle(id) {
+      if (!isExpandable(id)) return;
+      if (expanded.has(id)) collapseBranch(id);
+      else expandWithAncestors(id);
+      updateHash();
+      render();
+    }
+
+    essayRoot.addEventListener('click', (event) => {
+      const anchor = event.target.closest('.expansion-anchor');
+      if (!anchor || !essayRoot.contains(anchor)) return;
+      toggle(anchor.dataset.id);
+    });
+
+    essayRoot.addEventListener('keydown', (event) => {
+      const anchor = event.target.closest('.expansion-anchor');
+      if (!anchor || !essayRoot.contains(anchor)) return;
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        toggle(anchor.dataset.id);
+      }
+    });
+
+    document.getElementById('reset').addEventListener('click', () => {
+      expanded.clear();
+      updateHash();
+      render();
+      shareRoot.hidden = true;
+      clearStatusSoon('Reset to root.');
+    });
+
+    document.getElementById('copy-link').addEventListener('click', async () => {
+      updateHash();
+      const value = shareInput.value;
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(value);
+          shareRoot.hidden = true;
+          clearStatusSoon('Link copied.');
+          return;
+        }
+      } catch (error) {}
+
+      shareRoot.hidden = false;
+      shareInput.focus();
+      shareInput.select();
+      shareInput.setSelectionRange(0, value.length);
+      let copied = false;
+      try {
+        copied = document.execCommand('copy');
+      } catch (error) {
+        copied = false;
+      }
+      clearStatusSoon(copied ? 'Link copied.' : 'Copy blocked; the link is selected below.');
+    });
+
+    window.addEventListener('hashchange', () => {
+      loadHash();
+      render();
+    });
+
+    loadHash();
+    render();
+  </script>
+</body>
+</html>
