@@ -1,4 +1,4 @@
-EMACS ?= /opt/homebrew/bin/emacs
+EMACS ?= $(shell if [ -x /opt/homebrew/bin/emacs ]; then echo /opt/homebrew/bin/emacs; else echo emacs; fi)
 OUTPUT_DIR ?= public
 
 ORG_FILES := $(wildcard *.org)
