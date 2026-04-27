@@ -1,0 +1,76 @@
+#+TITLE: Prompting as Essay
+#+HTML_HEAD_EXTRA: <style>.site-nav{position:fixed;top:0.5rem;left:0.5rem;z-index:1000;}</style>
+
+#+begin_export html
+<div class="site-nav">[<a href="index.html">Disordered List</a>]</div>
+#+end_export
+
+#+begin_export html
+<p style="text-align: right;"><i>'Yes. I think the idea is ready for a first inking.'</i></p>
+#+end_export
+
+The word prompting has become strangely narrow. By convention, it now often means the act of sending an instruction to a language model and receiving an answer in return. The user prompts; the assistant responds. A turn is made, then answered. The roles appear clean.
+
+But this convention conceals almost everything interesting.
+
+In any serious exchange, the user is also being prompted. The model’s answer exposes a shape: sometimes promising, sometimes false, sometimes fluent enough to be dangerous. The user reads it, feels where it fails, discovers that the intention was not yet as clear as it seemed, and writes again. The next prompt is therefore not merely an instruction. It is a response to being prompted by the prior attempt. The exchange is reciprocal, even if not symmetrical. One party generates from a statistical manifold; the other judges from taste, memory, purpose, irritation, tradition, and commitment. The form emerges between them.
+
+This means that prompting is not best understood as command. It is closer to essay: trial, attempt, assay, a putting-to-proof. A prompt is not simply the cause of an output. It is a provisional articulation of a desired world, made precise by seeing what it accidentally permits.
+
+The first output of a language model often resembles a block already decorated on the surface. It can be rich, fluent, and apparently specific, yet still somehow untouched by the deepest constraint. It has the sheen of significance without the hardness of having excluded alternatives. It knows how to shade the surface. It does not always know the geometry. This is why the first impressive answer may become less impressive when sampled many times. The apparent depth reveals itself as a narrow basin. The model may not know one joke exactly, but it often knows one kind of joke: one distributional answer, one attractive simplification, one plausible surface of thought.
+
+The value of interaction begins when the user recognizes what in that surface is not the thing. A correction is not merely additional information. It is contrastive information. It says: preserve this, remove that; the error is not here but there; the surface feature is acceptable, but the underlying distinction is wrong; do not merely darken the shadow, change the form casting it.
+
+This is why the analogy to sculpture is so useful. A good user turn can function like a chisel stroke. It introduces a separating plane between the intended object and the material still surrounding it. The skill lies not only in knowing what the final object should be, but in knowing which cut can reveal it without destroying it. A bad correction hacks at the whole block. A good correction removes just enough.
+
+There are familiar failures. The cut may be muddy: “make it better,” “more thoughtful,” “less generic.” These are not nothing, but they are soft tools. They identify dissatisfaction without locating the fault. The orientation may be wrong: a user objects to verbosity when the real failure is evasiveness, or objects to abstraction when the real failure is lack of commitment. The position may be wrong: the correction is directionally sound but too severe, causing the model to amputate what should only have been refined. The bounds may be wrong: a local instruction becomes global, and in reshaping a finger the model clips the head.
+
+The most insidious failures are those that leave the rejected material visible. “Not X, but Y” is the emblem of this. The user asks for X to be removed, and the model obligingly explains that the result is not X. The negative space becomes a label on the statue. The ghost of the cut remains in the final surface. What should have disappeared has instead become an organizing contrast.
+
+This is not only a stylistic defect. It reveals a deeper fact about language-model context: negation is not erasure. To forbid something is often to make it salient. The model must represent the unwanted thing in order to avoid it, and what is represented may return. Thus one of the arts of prompting is learning when to correct through negation and when to restate the positive form. “Do not be generic” is weaker than “make claims that would be difficult to write without having taken a position.” “Avoid sounding like an AI” is weaker than “prefer situated distinctions, asymmetric tradeoffs, and sentences that exclude nearby alternatives.” The first protests against residue; the second supplies geometry.
+
+Yet marble is not the whole studio. Language-model interaction is also additive. The user may introduce new material: concepts, analogies, constraints, examples, memories, aesthetic values, code, documents, fragments of tradition. These are not merely paint on the surface. Some become structure. The medium is not stone alone but also clay, wax, pigment, mold, cast, notebook, archive, and weather.
+
+In clay, the artist can add and subtract. In wax, a form can be modeled toward casting. In paint, surface is not superficial; texture and opacity can themselves create volume. In coding, a failed attempt may become a test case, a regression, a specification. In writing, a failed paragraph may reveal the sentence that should have governed the whole essay. The studio contains many operations, and each has its own discipline.
+
+The long conversation adds another dimension: time. A context is not an infinitely faithful mind. It is an accumulating field of salience. Earlier material remains, but not always in the way the user intends. Some details become sticky. Some distinctions fade. Rejected language can continue to haunt the output. A local correction can harden into a global law. A provisional metaphor can become an unwanted premise. An adjacent topic, once introduced, may outcompete the actual center.
+
+So long interaction requires more than good individual prompts. It requires curation. The question becomes not merely what to say next, but what should continue to be present. Some material belongs in active context. Some should be compressed into a decision. Some should be archived but not allowed to influence the next generation. Some should be forgotten entirely. Some should be recast as a clean seed.
+
+This is where compaction becomes conceptually important. A compaction is not just a technical maneuver to save tokens. It is a re-authoring event. It decides which parts of the prior exchange were discoveries, which were accidents, which were failed paths, and which have become binding constraints. A bad compaction preserves the wound: “the user objected several times to generic prose and disliked ‘not X but Y’ constructions.” A better compaction preserves the law: “write by making direct, consequential distinctions without displaying the rejected alternatives as scaffolding.”
+
+The clean seed prompt is a mold. But not every mold is equal. A crude mold preserves outline without life. A good mold preserves the negative geometry necessary to regenerate the form. It does not reproduce the chips on the studio floor. It does not reproduce the miscuts, the abandoned metaphors, the user’s irritation, or the sequence by which the shape was found. It carries forward only what has become generative.
+
+At the limit, such a seed might be called a mold made from marble itself. The phrase is paradoxical, but apt. A conversation conducted under constraint may produce a distilled prompt so shaped by the subtractive discipline that it carries something of the original medium’s authority. It is not the original statue. It does not have the intrinsic value of the first successful act. A reproduction of David is not David. Yet it may still be artistically appreciable, and under sufficiently refined conditions it may imitate the form arbitrarily well. The copy lacks the historical singularity of the original, but it can preserve an astonishing amount of its visible intelligence.
+
+This distinction matters because many contemporary systems tempt us to confuse abundance with depth. Long context, persistent memory, retrieval, agents, tools, and compaction all expand the studio. They make more operations possible. But they do not replace the judgment that knows which operation is called for. A larger studio can produce better work, but it can also accumulate more debris. More memory can preserve more insight, but it can also preserve more error. More context can support continuity, but it can also make the output less free, less direct, less able to forget what should no longer matter.
+
+Constraint is therefore not merely deprivation. It is a training of perception.
+
+Marble teaches irreversibility. Clay teaches revision. Paint teaches layering. Code teaches executable consequence. The essay teaches provisional attempt under the discipline of thought. Each medium makes some failures obvious and hides others. Each punishes imprecision differently. Skill acquired in one may transfer to another, not because the materials are the same, but because the practitioner has learned to perceive load-bearing distinctions.
+
+A programmer trained under tight constraints may learn to ask what state is essential, what interface is minimal, what dependency is accidental, what invariant must never be left implicit. A writer trained by prose may learn to hear when a sentence carries no commitment, when a metaphor is decoration rather than structure, when an argument hides behind balance. These aptitudes can cross domains. Code can teach writing the virtue of consequence. Writing can teach code the virtue of form. Both can teach prompting the virtue of saying only what should remain operative.
+
+This also complicates the identity of the prompter. We are not only prompting machines. We have always been prompted by predecessors, genres, teachers, readers, errors, tools, and unfinished drafts. A blank page prompts. A compiler prompts. A sentence that rings false prompts. A tradition prompts by making some moves available and others embarrassing. The user sitting before an LLM is not an isolated commander issuing instructions into a passive engine. The user is already an inheritor of prompts, writing from within a history of attempts.
+
+The model makes this more visible because it responds so quickly and so fluently. It externalizes the near miss. It gives us a surface on which our own vagueness becomes legible. Sometimes its failure is the most valuable thing it offers: not because the failure is good, but because it shows us what our instruction allowed. The model’s error becomes an assay of our intention.
+
+The mature practice is therefore neither blind generation nor endless correction. It is a sequence of disciplined attempts. Work in the messy context while discovery is alive. Make local cuts. Add material when the form requires it. Name invariants as they emerge. Notice when the conversation has become contaminated by its own history. Distill the living constraints. Recast them into a clean context. Continue from the mold, not from the rubble.
+
+The final artifact should not display every stage of its making. Much bad machine-assisted prose does exactly that. It bears the marks of correction as if they were meaning. It announces its exclusions. It explains its own posture. It carries the transcript like scar tissue. But the best result may have no visible trace of the exchange that produced it. It simply stands, with the strange calm of a thing that has passed through many failed versions without needing to mention them.
+
+This is not a denial of process. It is fidelity to process. The chips need not remain attached to the statue. The draft need not include the workshop. The prompt need not preserve the whole conversation. The final form honors the attempt by no longer sounding attempted.
+
+So perhaps prompting, in the richer sense, is the art of conducting attempts such that each one clarifies the next. It is sculptural when it removes. Painterly when it layers. Essayistic when it tests. Architectural when it preserves invariants. Archival when it decides what may be retrieved but need not be present. Temporal when it permits the right things to fade.
+
+And at its best, it is reciprocal. We prompt the model, and the model prompts us—not as an equal mind, not as an author in the old sense, but as a responsive medium whose fluent failures and partial successes give our own judgment something to strike against. The intelligence of the exchange lies neither wholly in the machine nor wholly in the user’s initial intention. It lies in the disciplined passage from vague desire to portable form.
+
+The question is not whether the machine can produce depth from nothing. It cannot. The question is whether, under the pressure of skilled interaction, it can become a medium in which depth already latent in the user, the tradition, the materials, and the task is progressively made explicit.
+
+The answer, provisionally, is yes.
+
+But only when prompting ceases to mean asking for an answer, and returns to meaning what writing has always meant: an attempt that changes the one who makes it.
+
+#+begin_export html
+<center>[<a href="in-context-learning-exploration.html">Behind the scenes</a>]</center>
+#+end_export
