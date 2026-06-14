@@ -31,6 +31,8 @@ LOCAL_NAV_RE = re.compile(
     re.IGNORECASE | re.DOTALL,
 )
 TITLE_RE = re.compile(r"(<title>)(.*?)(</title>)", re.IGNORECASE | re.DOTALL)
+INLINE_CODE_RE = re.compile(r"`([^`\n]+)`")
+ORDERED_LIST_RE = re.compile(r"^\d+[.)]\s+(.+)$")
 
 
 def parse_args() -> argparse.Namespace:
@@ -131,6 +133,53 @@ def json_loads(value: str):
     return json.loads(value)
 
 
+def render_inline_markdown(text: str) -> str:
+    code_spans: list[str] = []
+
+    def stash_code(match: re.Match[str]) -> str:
+        code_spans.append(f"<code>{html.escape(match.group(1))}</code>")
+        return f"\x00CODE{len(code_spans) - 1}\x00"
+
+    rendered = INLINE_CODE_RE.sub(stash_code, text)
+    rendered = html.escape(rendered, quote=False)
+    rendered = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", rendered)
+    rendered = re.sub(r"(?<!\*)\*([^*\n]+)\*(?!\*)", r"<em>\1</em>", rendered)
+
+    for index, code_span in enumerate(code_spans):
+        rendered = rendered.replace(f"\x00CODE{index}\x00", code_span)
+
+    return rendered
+
+
+def render_blockquote(lines: list[str]) -> str:
+    blocks: list[str] = []
+    paragraph: list[str] = []
+
+    def flush_quote_paragraph() -> None:
+        if not paragraph:
+            return
+
+        text = "\n".join(paragraph).strip()
+        paragraph.clear()
+        if text:
+            blocks.append(
+                f"<p>{render_inline_markdown(text).replace(chr(10), '<br>')}</p>"
+            )
+
+    for line in lines:
+        quote_line = line[1:]
+        if quote_line.startswith(" "):
+            quote_line = quote_line[1:]
+
+        if quote_line.strip():
+            paragraph.append(quote_line)
+        else:
+            flush_quote_paragraph()
+
+    flush_quote_paragraph()
+    return f"<blockquote>\n{chr(10).join(blocks)}\n</blockquote>"
+
+
 def compact_ref(table: list, ref):
     if isinstance(ref, int) and 0 <= ref < len(table):
         return table[ref]
@@ -229,25 +278,40 @@ def render_message_text(text: str) -> str:
             return
 
         if block.startswith("# "):
-            blocks.append(f"<h2>{html.escape(block[2:].strip())}</h2>")
+            blocks.append(f"<h2>{render_inline_markdown(block[2:].strip())}</h2>")
             return
         if block.startswith("## "):
-            blocks.append(f"<h3>{html.escape(block[3:].strip())}</h3>")
+            blocks.append(f"<h3>{render_inline_markdown(block[3:].strip())}</h3>")
             return
         if block.startswith("### "):
-            blocks.append(f"<h4>{html.escape(block[4:].strip())}</h4>")
+            blocks.append(f"<h4>{render_inline_markdown(block[4:].strip())}</h4>")
             return
 
         block_lines = block.splitlines()
+        if block_lines and all(line.startswith(">") for line in block_lines):
+            blocks.append(render_blockquote(block_lines))
+            return
+
         if block_lines and all(line.startswith("- ") for line in block_lines):
             items = "".join(
-                f"<li>{html.escape(line[2:].strip())}</li>" for line in block_lines
+                f"<li>{render_inline_markdown(line[2:].strip())}</li>"
+                for line in block_lines
             )
             blocks.append(f"<ul>{items}</ul>")
             return
 
-        escaped = html.escape(block).replace("\n", "<br>")
-        blocks.append(f"<p>{escaped}</p>")
+        ordered_matches = [ORDERED_LIST_RE.match(line) for line in block_lines]
+        if ordered_matches and all(ordered_matches):
+            items = "".join(
+                f"<li>{render_inline_markdown(match.group(1).strip())}</li>"
+                for match in ordered_matches
+                if match is not None
+            )
+            blocks.append(f"<ol>{items}</ol>")
+            return
+
+        rendered = render_inline_markdown(block).replace("\n", "<br>")
+        blocks.append(f"<p>{rendered}</p>")
 
     def flush_code() -> None:
         blocks.append(f"<pre><code>{html.escape(chr(10).join(code))}</code></pre>")
@@ -357,11 +421,11 @@ def render_static_transcript(
       padding: 0.9rem 1rem;
     }}
 
-    p, ul, pre {{
+    p, ul, ol, blockquote, pre {{
       margin: 0 0 1rem;
     }}
 
-    p:last-child, ul:last-child, pre:last-child {{
+    p:last-child, ul:last-child, ol:last-child, blockquote:last-child, pre:last-child {{
       margin-bottom: 0;
     }}
 
@@ -375,6 +439,27 @@ def render_static_transcript(
       border-radius: 0.5rem;
       background: var(--code);
       padding: 0.9rem 1rem;
+    }}
+
+    code {{
+      border-radius: 0.25rem;
+      background: var(--code);
+      padding: 0.1rem 0.25rem;
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 0.95em;
+    }}
+
+    pre code {{
+      border-radius: 0;
+      background: transparent;
+      padding: 0;
+      font-size: 1em;
+    }}
+
+    blockquote {{
+      border-left: 0.2rem solid var(--line);
+      padding-left: 1rem;
+      color: #333333;
     }}
   </style>
 </head>

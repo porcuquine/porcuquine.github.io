@@ -97,7 +97,9 @@ If the share page has already been saved locally, use `--input saved.html`
 instead of `--url` and pass `--source-url` with the original ChatGPT share URL.
 The helper preserves older rendered ChatGPT share HTML when available; for newer
 ChatGPT share pages, it extracts the embedded conversation data and emits a
-self-contained static transcript.
+self-contained static transcript. The static transcript renderer handles the
+small Markdown subset commonly emitted by ChatGPT, including emphasis, inline
+code, lists, and blockquotes.
 
 After generating the transcript page, add it to `STATIC_HTML` in `Makefile` so
 it is copied into `public/`.
