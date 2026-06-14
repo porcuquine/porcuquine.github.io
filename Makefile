@@ -1,9 +1,16 @@
 EMACS ?= $(shell if [ -x /opt/homebrew/bin/emacs ]; then echo /opt/homebrew/bin/emacs; else echo emacs; fi)
 OUTPUT_DIR ?= public
 
-ORG_FILES := $(wildcard *.org)
+ORG_FILES := \
+	prompting-as-essay.org \
+	committee.org
 ORG_TARGETS := $(addprefix $(OUTPUT_DIR)/,$(ORG_FILES:.org=.html))
-STATIC_HTML := $(filter-out $(ORG_FILES:.org=.html),$(wildcard *.html))
+STATIC_HTML := \
+	index.html \
+	an-essay-written-with-a-language-model.html \
+	market-forces-and-reality.html \
+	in-context-learning-exploration.html \
+	committee-behind-the-scenes.html
 STATIC_TARGETS := $(addprefix $(OUTPUT_DIR)/,$(STATIC_HTML))
 
 .PHONY: all clean

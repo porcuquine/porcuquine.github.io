@@ -22,8 +22,8 @@ make
 
 This does two things:
 
-1. exports every root-level `*.org` file to same-named `*.html` in `public/`
-2. copies the root-level hand-authored HTML pages into `public/`
+1. exports the Org files listed in `Makefile` to same-named `*.html` in `public/`
+2. copies the hand-authored HTML pages listed in `Makefile` into `public/`
 
 To remove generated output:
 
@@ -47,7 +47,9 @@ http://localhost:8000/
 ```
 
 This is the reliable preview path. It uses the same generated files that the
-GitHub Pages workflow deploys.
+GitHub Pages workflow deploys. Do not preview by opening the repository-root
+`index.html` directly; generated Org pages such as `committee.html` exist under
+`public/`, not beside the source `index.html`.
 
 ## GitHub Pages
 
@@ -64,37 +66,41 @@ The workflow installs Emacs on the runner, runs `make`, and deploys `public/`.
 
 1. Add a new `name.org` file in the repo root.
 2. Keep the Org source minimal unless you need custom HTML.
-3. Run `make`.
-4. Preview from `public/`.
-5. Commit the source changes. Do not commit `public/`.
+3. Add the source and any companion HTML page to `Makefile`.
+4. Add the rendered page to `index.html` when it should appear on the site.
+5. Run `make`.
+6. Preview from `public/`.
+7. Commit the source changes. Do not commit `public/`.
 
 ## Behind-The-Scenes Link Pattern
 
-The older interactive essay uses this pattern:
+Pieces with an associated ChatGPT transcript use this pattern:
 
 - the rendered essay links to a separate “Behind the scenes” page
 - the behind-the-scenes page links back to the rendered essay
 - the behind-the-scenes page also links to the original ChatGPT conversation
 
-The current essay follows the same pattern:
+### Transcript Helper
 
-- the main essay is Org and exports to HTML
-- the transcript page is a hand-authored HTML placeholder
+Use the helper to generate a behind-the-scenes page from a ChatGPT share URL:
 
-### Current Files
+```sh
+python3 build/make-chatgpt-behind-scenes.py \
+  --url "https://chatgpt.com/share/..." \
+  --output name-behind-the-scenes.html \
+  --back-href name.html \
+  --back-text "Essay Title" \
+  --title "Essay Title - Behind the Scenes"
+```
 
-- `prompting-as-essay.org`
-  Adds the top `[Disordered List]` link, includes the short “first inking”
-  sentence as an epigraph, and adds the bottom `[Behind the scenes]` link.
+If the share page has already been saved locally, use `--input saved.html`
+instead of `--url` and pass `--source-url` with the original ChatGPT share URL.
+The helper preserves older rendered ChatGPT share HTML when available; for newer
+ChatGPT share pages, it extracts the embedded conversation data and emits a
+self-contained static transcript.
 
-- `in-context-learning-exploration.html`
-  Is the transcript page. It links back to `prompting-as-essay.html` and
-  includes the original ChatGPT conversation URL.
-
-### Placeholder To Replace
-
-The transcript page already contains the literal transcript HTML and the current
-shared conversation URL.
+After generating the transcript page, add it to `STATIC_HTML` in `Makefile` so
+it is copied into `public/`.
 
 ## Notes
 
