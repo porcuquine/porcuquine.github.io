@@ -50,6 +50,18 @@ def parse_args() -> argparse.Namespace:
         "--source-url",
         help="Source URL for the ChatGPT Source link. Defaults to --url.",
     )
+    parser.add_argument(
+        "--essay-output",
+        help="Optional Org file to create from the final assistant turn.",
+    )
+    parser.add_argument(
+        "--essay-title",
+        help="Optional title for --essay-output. Defaults to the final H1.",
+    )
+    parser.add_argument(
+        "--essay-behind-href",
+        help="Optional behind-the-scenes link to append to --essay-output.",
+    )
     return parser.parse_args()
 
 
@@ -180,6 +192,153 @@ def render_blockquote(lines: list[str]) -> str:
     return f"<blockquote>\n{chr(10).join(blocks)}\n</blockquote>"
 
 
+def extract_chatgpt_writing_blocks(text: str) -> list[str]:
+    blocks: list[str] = []
+    current: list[str] | None = None
+
+    for line in text.replace("\r\n", "\n").replace("\r", "\n").split("\n"):
+        if line.startswith(":::writing"):
+            current = []
+            continue
+
+        if current is not None and line.strip() == ":::":
+            block = "\n".join(current).strip()
+            if block:
+                blocks.append(block)
+            current = None
+            continue
+
+        if current is not None:
+            current.append(line)
+
+    return blocks
+
+
+def strip_chatgpt_writing_markers(text: str) -> str:
+    lines: list[str] = []
+    for line in text.replace("\r\n", "\n").replace("\r", "\n").split("\n"):
+        if line.startswith(":::writing") or line.strip() == ":::":
+            continue
+        lines.append(line)
+
+    return "\n".join(lines).strip()
+
+
+def infer_markdown_title(text: str, fallback: str | None = None) -> str:
+    for line in text.splitlines():
+        match = re.match(r"#\s+(.+)$", line.strip())
+        if match:
+            return match.group(1).strip()
+
+    return fallback or "Untitled"
+
+
+def markdown_inline_to_org(text: str) -> str:
+    code_spans: list[str] = []
+
+    def stash_code(match: re.Match[str]) -> str:
+        code_spans.append(f"~{match.group(1)}~")
+        return f"\x00CODE{len(code_spans) - 1}\x00"
+
+    rendered = INLINE_CODE_RE.sub(stash_code, text)
+    rendered = re.sub(r"\*\*(.+?)\*\*", r"*\1*", rendered)
+    rendered = re.sub(r"(?<!\*)\*([^*\n]+)\*(?!\*)", r"/\1/", rendered)
+
+    for index, code_span in enumerate(code_spans):
+        rendered = rendered.replace(f"\x00CODE{index}\x00", code_span)
+
+    return rendered
+
+
+def markdown_to_org_body(text: str, title: str) -> str:
+    lines = strip_chatgpt_writing_markers(text).splitlines()
+    body: list[str] = []
+    in_code = False
+    in_quote = False
+    skipped_title = False
+
+    def close_quote() -> None:
+        nonlocal in_quote
+        if in_quote:
+            body.append("#+end_quote")
+            in_quote = False
+
+    for line in lines:
+        if line.startswith("```"):
+            close_quote()
+            body.append("#+end_example" if in_code else "#+begin_example")
+            in_code = not in_code
+            continue
+
+        if in_code:
+            body.append(line)
+            continue
+
+        heading = re.match(r"(#{1,6})\s+(.+)$", line)
+        if heading:
+            close_quote()
+            heading_text = heading.group(2).strip()
+            if not skipped_title and len(heading.group(1)) == 1 and heading_text == title:
+                skipped_title = True
+                continue
+
+            level = "*" * len(heading.group(1))
+            body.append(f"{level} {markdown_inline_to_org(heading_text)}")
+            continue
+
+        if line.startswith(">"):
+            if not in_quote:
+                body.append("#+begin_quote")
+                in_quote = True
+
+            quote_line = line[1:]
+            if quote_line.startswith(" "):
+                quote_line = quote_line[1:]
+            body.append(markdown_inline_to_org(quote_line))
+            continue
+
+        close_quote()
+        body.append(markdown_inline_to_org(line))
+
+    if in_code:
+        body.append("#+end_example")
+    close_quote()
+    return "\n".join(body).strip()
+
+
+def render_org_essay(
+    text: str,
+    title: str,
+    behind_href: str | None,
+) -> str:
+    body = markdown_to_org_body(text, title)
+    parts = [
+        f"#+TITLE: {title}",
+        (
+            "#+HTML_HEAD_EXTRA: "
+            "<style>.site-nav{position:fixed;top:0.5rem;left:0.5rem;z-index:1000;}</style>"
+        ),
+        "",
+        "#+begin_export html",
+        '<div class="site-nav">[<a href="index.html">Disordered List</a>]</div>',
+        "#+end_export",
+        "",
+        body,
+    ]
+
+    if behind_href:
+        parts.extend(
+            [
+                "",
+                "#+begin_export html",
+                f'<center>[<a href="{behind_href}">Behind the scenes</a>]</center>',
+                "#+end_export",
+            ]
+        )
+
+    return "\n".join(parts).rstrip() + "\n"
+
+
 def compact_ref(table: list, ref):
     if isinstance(ref, int) and 0 <= ref < len(table):
         return table[ref]
@@ -262,6 +421,7 @@ def extract_compact_share(document: str) -> tuple[str | None, list[dict[str, str
 
 
 def render_message_text(text: str) -> str:
+    text = strip_chatgpt_writing_markers(text)
     lines = text.replace("\r\n", "\n").replace("\r", "\n").split("\n")
     blocks: list[str] = []
     paragraph: list[str] = []
@@ -485,9 +645,34 @@ def render_document(document: str, args: argparse.Namespace) -> str:
     return inject_nav(document, nav)
 
 
+def write_essay_output(document: str, args: argparse.Namespace) -> None:
+    if not args.essay_output:
+        return
+
+    compact_share = extract_compact_share(document)
+    if not compact_share:
+        raise ValueError("Could not extract compact ChatGPT conversation data.")
+
+    extracted_title, messages = compact_share
+    last_assistant = next(
+        (message["text"] for message in reversed(messages) if message["role"] == "assistant"),
+        None,
+    )
+    if last_assistant is None:
+        raise ValueError("Could not find an assistant turn to export.")
+
+    writing_blocks = extract_chatgpt_writing_blocks(last_assistant)
+    essay_text = writing_blocks[-1] if writing_blocks else last_assistant
+    cleaned_text = strip_chatgpt_writing_markers(essay_text)
+    title = args.essay_title or infer_markdown_title(cleaned_text, extracted_title)
+    essay = render_org_essay(cleaned_text, title, args.essay_behind_href)
+    pathlib.Path(args.essay_output).write_text(essay, encoding="utf-8")
+
+
 def main() -> int:
     args = parse_args()
     document = read_document(args)
+    write_essay_output(document, args)
     document = render_document(document, args)
 
     output = pathlib.Path(args.output)

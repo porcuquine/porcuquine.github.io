@@ -101,8 +101,26 @@ self-contained static transcript. The static transcript renderer handles the
 small Markdown subset commonly emitted by ChatGPT, including emphasis, inline
 code, lists, and blockquotes.
 
-After generating the transcript page, add it to `STATIC_HTML` in `Makefile` so
-it is copied into `public/`.
+If the final assistant turn contains the essay text, the helper can also create
+the Org source file:
+
+```sh
+python3 build/make-chatgpt-behind-scenes.py \
+  --url "https://chatgpt.com/share/..." \
+  --output name-behind-the-scenes.html \
+  --back-href name.html \
+  --back-text "Essay Title" \
+  --title "Essay Title - Behind the Scenes" \
+  --essay-output name.org \
+  --essay-behind-href name-behind-the-scenes.html
+```
+
+The Org exporter uses the final ChatGPT writing block when one is present,
+infers the title from its top-level Markdown heading, adds the site nav, and
+appends the behind-the-scenes link.
+
+After generating the files, add any generated Org essay to `ORG_FILES` and the
+transcript page to `STATIC_HTML` in `Makefile` so they are built into `public/`.
 
 ## Notes
 

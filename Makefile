@@ -3,14 +3,16 @@ OUTPUT_DIR ?= public
 
 ORG_FILES := \
 	prompting-as-essay.org \
-	committee.org
+	committee.org \
+	the-gradient.org
 ORG_TARGETS := $(addprefix $(OUTPUT_DIR)/,$(ORG_FILES:.org=.html))
 STATIC_HTML := \
 	index.html \
 	an-essay-written-with-a-language-model.html \
 	market-forces-and-reality.html \
 	in-context-learning-exploration.html \
-	committee-behind-the-scenes.html
+	committee-behind-the-scenes.html \
+	the-gradient-behind-the-scenes.html
 STATIC_TARGETS := $(addprefix $(OUTPUT_DIR)/,$(STATIC_HTML))
 
 .PHONY: all clean
