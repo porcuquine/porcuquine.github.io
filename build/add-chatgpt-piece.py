@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import importlib.util
+import os
 import pathlib
 import re
 import types
@@ -18,6 +19,7 @@ import unicodedata
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 HELPER_PATH = pathlib.Path(__file__).with_name("make-chatgpt-behind-scenes.py")
+SRC_DIR = ROOT / os.environ.get("SRC_DIR", "src")
 
 
 def parse_args() -> argparse.Namespace:
@@ -130,6 +132,7 @@ def ensure_new_paths(paths: list[pathlib.Path], force: bool) -> None:
 def main() -> int:
     args = parse_args()
     helper = load_helper()
+    SRC_DIR.mkdir(parents=True, exist_ok=True)
 
     fetch_args = types.SimpleNamespace(input=None, url=args.url)
     document = helper.read_document(fetch_args)
@@ -142,8 +145,8 @@ def main() -> int:
     org_name = f"{slug}.org"
     html_name = f"{slug}.html"
     transcript_name = f"{slug}-behind-the-scenes.html"
-    org_path = ROOT / org_name
-    transcript_path = ROOT / transcript_name
+    org_path = SRC_DIR / org_name
+    transcript_path = SRC_DIR / transcript_name
     ensure_new_paths([org_path, transcript_path], args.force)
 
     org_path.write_text(
@@ -165,7 +168,7 @@ def main() -> int:
 
     append_makefile_item(ROOT / "Makefile", "ORG_FILES", org_name)
     append_makefile_item(ROOT / "Makefile", "STATIC_HTML", transcript_name)
-    append_index_item(ROOT / "index.html", html_name, title)
+    append_index_item(SRC_DIR / "index.html", html_name, title)
 
     print(f"Added {title}")
     print(f"  essay: {org_name}")

@@ -1,4 +1,5 @@
 EMACS ?= $(shell if [ -x /opt/homebrew/bin/emacs ]; then echo /opt/homebrew/bin/emacs; else echo emacs; fi)
+SRC_DIR ?= src
 OUTPUT_DIR ?= public
 ZIP_DIR ?= zips
 ZIP_FILE ?= porcuquine-site-$(shell date +%F).zip
@@ -40,10 +41,10 @@ zip latest-zip: all | $(ZIP_DIR)
 
 add-chatgpt-piece:
 	test -n "$(URL)"
-	python3 build/add-chatgpt-piece.py "$(URL)"
+	SRC_DIR="$(SRC_DIR)" python3 build/add-chatgpt-piece.py "$(URL)"
 
-$(OUTPUT_DIR)/%.html: %.org build/export-org.el | $(OUTPUT_DIR)
+$(OUTPUT_DIR)/%.html: $(SRC_DIR)/%.org build/export-org.el | $(OUTPUT_DIR)
 	OUTPUT_DIR="$(OUTPUT_DIR)" $(EMACS) --batch -Q -l build/export-org.el "$<"
 
-$(OUTPUT_DIR)/%.html: %.html | $(OUTPUT_DIR)
+$(OUTPUT_DIR)/%.html: $(SRC_DIR)/%.html | $(OUTPUT_DIR)
 	cp "$<" "$@"
