@@ -18,5 +18,5 @@
 .#*
 *.~undo-tree~
 __pycache__/
-public/
-zips/
+/public/
+/zips/

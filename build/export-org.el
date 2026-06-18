@@ -13,7 +13,7 @@
 (defun pq/export-org-file (file)
   "Export FILE to HTML with minimal site-wide defaults."
   (let* ((source (expand-file-name file))
-         (output-dir (or (getenv "OUTPUT_DIR") default-directory))
+         (output-dir (expand-file-name (or (getenv "OUTPUT_DIR") default-directory)))
          (output (expand-file-name
                   (concat (file-name-base source) ".html")
                   output-dir)))
