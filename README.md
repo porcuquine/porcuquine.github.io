@@ -134,6 +134,23 @@ appends the behind-the-scenes link.
 After generating the files, add any generated Org essay to `ORG_FILES` and the
 transcript page to `STATIC_HTML` in `Makefile` so they are built into `public/`.
 
+For the common case where the title and slug can be inferred, use the
+repo-specific wrapper:
+
+```sh
+make add-chatgpt-piece URL="https://chatgpt.com/share/..."
+```
+
+This creates `slug.org` and `slug-behind-the-scenes.html`, updates `Makefile`,
+and adds the entry to `index.html`. The wrapper accepts the same URL directly:
+
+```sh
+python3 build/add-chatgpt-piece.py "https://chatgpt.com/share/..."
+```
+
+Use `--title`, `--slug`, or `--force` with the Python wrapper when inference or
+overwrite behavior needs to be controlled.
+
 ## Notes
 
 - Root-level generated Org exports are no longer kept in the repository.

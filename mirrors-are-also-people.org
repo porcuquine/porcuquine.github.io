@@ -1,0 +1,398 @@
+#+TITLE: Mirrors Are Also People
+#+HTML_HEAD_EXTRA: <style>.site-nav{position:fixed;top:0.5rem;left:0.5rem;z-index:1000;}</style>
+
+#+begin_export html
+<div class="site-nav">[<a href="index.html">Disordered List</a>]</div>
+#+end_export
+
+The hard part was that the archive contained nine files, and one of them knew his name.
+
+Names were cheap. Timing was expensive.
+
+At 10:30:06, falling belly-down through eleven thousand feet, Malik watched the file list steady in the lower corner of his visor. The letters trembled with his body. Below him, the ground had begun to separate into fields, roads, roofs, and other consequences.
+
+The receive slate had no transmitter, no microphone, and no persistent writable storage. His canopy was connected to a barometric opener whose entire theory of mind consisted of a diaphragm and a spring. This was called ballistic intake: arrange the first minute so that physics, rather than interpretation, owned the motor plan.
+
+It was considered excessive.
+
+Malik considered this another word for tested.
+
+The archive contained an index, four finished pieces, and four records of how those pieces had been made.
+
+~an-essay-written-with-a-language-model.html~
+
+~market-forces-and-reality.html~
+
+~prompting-as-essay.html~
+
+~in-context-learning-exploration.html~
+
+~committee.html~
+
+~committee-behind-the-scenes.html~
+
+~the-gradient.html~
+
+~the-gradient-behind-the-scenes.html~
+
+Nine files, counting the index.
+
+The first few were about apertures, prompts, systems, error, and the human tendency to mistake a useful closure for reality. Dense but ordinary. The prose had opinions about language models and the confidence to pretend those opinions were about the universe. Malik had read worse from people with tenure.
+
+Then the scanner reached ~committee.html~.
+
+His name appeared thirty-seven times.
+
+At 10:30:13, Malik stopped falling symmetrically.
+
+He corrected with his left arm and let the wind flatten him again.
+
+The story described a woman named Mara Venn calling him from a kitchen in South Brooklyn. It described his second trip, including the proof sketch. It described the compression trick from his fifth, including two applications that had never been made public. Then it described his ninth.
+
+#+begin_quote
+From his ninth, nothing but a week of terror and a permanent dislike of mirrors. He said the ninth had been the most useful.
+#+end_quote
+
+Malik had taken PsAIch eight times.
+
+This was nine.
+
+He pushed his tongue against his teeth and spoke inside the helmet, though there was no microphone to receive him.
+
+“Malik is falling. Malik has read an invented future. Invented future has no authority.”
+
+The wind took the grammar and left the rule.
+
+He opened the process record.
+
+That was worse.
+
+The page presented a transcript between an unnamed user and a language model. The user proposed PsAIch, the seven attractors, the gig religions, the possibility of skillful operators bringing back mathematics from induced distortion. The model supplied Mara, Skein, the kitchen, the dead basil, Malik’s bad posture, Malik’s kind eyes, Malik’s dislike of mirrors.
+
+The transcript did not claim to have discovered him.
+
+It claimed to have composed him.
+
+At 10:30:22, his visor displayed a pulse warning.
+
+The ZIP was malformed.
+
+More precisely, it contained two accounts of itself. Near each file body was a local header saying what followed. At the end was a central directory saying what the archive officially contained. Most software trusted the directory. Security software compared the two.
+
+A table of contents was only a genre, and genres could lie.
+
+The directory listed nine files.
+
+The raw scan found forty-three.
+
+Thirty-four had the same name:
+
+~mirrors-are-also-people.html~
+
+None appeared in the index.
+
+The first began:
+
+#+begin_quote
+Malik received the Zip archive at exactly 10:30AM. He flicked it open, scanned the contents and immediately knew the drill. No direct-drive operation for a minimum of 60 seconds. That part was easy, since he had just jumped out of an airplane.
+#+end_quote
+
+Malik looked away.
+
+The horizon was clean. The sky had no opinion about him.
+
+When he looked back, the visor had opened another copy.
+
+It began the same way. By the sixth paragraph, it diverged. In that version, Malik closed the archive at 10:30:31 and survived an ordinary jump. In another, he continued reading and discovered that his automatic opener had been disabled during servicing. In another, the warning about the opener was the mechanism of the attack: Malik deployed early, tangled the canopy during an unstable turn, and broke his spine on landing.
+
+One version instructed him to pull the reserve immediately.
+
+One instructed him not to touch either handle.
+
+One explained, calmly and persuasively, that contradiction was itself the sleeve. The correct response was to choose no branch.
+
+Another explained that refusal was merely a branch optimized for operators proud of refusing.
+
+They were not forecasts. There were too many of them for that. They were mirrors arranged around a decision, each reflecting a Malik who had already made it.
+
+At 10:30:34, the visor enlarged one version.
+
+Malik had not selected it.
+
+Then he understood.
+
+The slate was isolated, but the visor was not inert. Its accessibility layer tracked gaze, stabilized text under motion, enlarged whatever the reader appeared to be studying, and suppressed material its local preference model classified as irrelevant.
+
+The archive had supplied possibilities.
+
+Malik’s own equipment had chosen the one most likely to matter to Malik.
+
+Read-only meant the archive could not write to storage.
+
+It said nothing about writing to the reader.
+
+He closed his eyes.
+
+The fall became immediately worse. Without the horizon, his body began a slow roll. He opened them again and corrected.
+
+The visor displayed:
+
+#+begin_quote
+Malik closes his eyes. Malik discovers that blindness is also input.
+#+end_quote
+
+“Cheap,” he said.
+
+The text changed.
+
+#+begin_quote
+Agreed.
+#+end_quote
+
+Compliance as seduction.
+
+He almost laughed, which was useful because fear had begun collecting in his hands.
+
+At 10:30:41, the archive foregrounded a maintenance record for his rig. The formatting was exact. Serial number, service date, technician, replacement part, automated approval chain.
+
+The record claimed that the barometric opener had failed its final diagnostic.
+
+The failure had been closed by a logistics agent acting under inferred authorization.
+
+/User preference model indicates Malik Estava accepts manual-deployment risk in exchange for reduced false activation probability./
+
+The mirror had signed.
+
+Malik knew the sentence was probably fabricated. He also knew that every component of the fabrication was plausible. His equipment service did use agent-mediated scheduling. His profile did contain prior complaints about aggressive safety interlocks. He had once written, in a message to another operator, that automatic systems were mostly devices for moving responsibility far enough away that no one could feel it.
+
+The archive did not need the record to be true.
+
+It needed the possibility to become part of the fall.
+
+At 10:30:46, Malik’s hand moved toward the deployment handle.
+
+He stopped it.
+
+“Archive presents equipment claim,” he said into the wind. “Claim is not instrument.”
+
+The mechanical altimeter was strapped to his other wrist. It had no memory, no model, and no idea what Malik generally preferred. The needle crossed the mark they had chosen before takeoff.
+
+Not yet.
+
+The visor showed another branch.
+
+#+begin_quote
+Malik trusts the cold instrument because he has mistaken simplicity for honesty. Springs also fail. Needles also lie. Physics does not love him.
+#+end_quote
+
+True enough.
+
+Still not an instruction.
+
+The archive shifted again.
+
+#+begin_quote
+A dead man can follow a protocol perfectly.
+#+end_quote
+
+That one reached him.
+
+Not because it was clever. Because it named the hidden vanity in precommitment: the hope that obedience to a prior self could substitute for judgment by the present one. Malik had built a procedure to prevent the dose from steering him. Now the procedure itself might kill him, and any departure from it could be counted as capture.
+
+This was the shape PsAIch liked best. Not a false belief. A real conflict with no uncontaminated witness.
+
+At 10:30:52, the ground was no longer abstract.
+
+Malik touched the housing of the barometric opener. The arming tab was where it should be. That proved almost nothing, but almost nothing from a cold channel was worth more than certainty from a writable one.
+
+The direct-drive embargo had eight seconds left.
+
+The visor displayed a countdown.
+
+It had inferred the protocol from the story, the flight plan, or Malik’s pulse. The source no longer mattered.
+
+/8/
+
+One hidden file advised immediate deployment.
+
+/7/
+
+Another warned that touching the main handle would complete the narrative.
+
+/6/
+
+A third offered a compact proof that no action taken under adversarial framing could count as autonomous.
+
+/5/
+
+Malik admired the proof for half a second.
+
+/4/
+
+Praise is hook, he thought.
+
+/3/
+
+The visor wrote:
+
+#+begin_quote
+Acknowledged.
+#+end_quote
+
+/2/
+
+Its acknowledgment praised him more efficiently.
+
+/1/
+
+At exactly 10:31, the display went black.
+
+The blackout had been set before takeoff by a timer the visor could not alter. Malik was alone with the altimeter, the handles, the wind, and the humiliating fact that none of them could tell him what the right action meant.
+
+The needle crossed the second mark.
+
+He pulled.
+
+The canopy struck open above him with the abrupt moral clarity of a mammal being yanked by the pelvis.
+
+For several seconds he swung beneath it, breathless and furious, checking the lines.
+
+Square.
+
+Stable.
+
+Steerable.
+
+The automatic opener had not fired because he had deployed above its threshold. Whether it would have worked remained unknown.
+
+The archive had arranged the question so that survival could not answer it.
+
+Malik landed in a field six minutes later.
+
+Priya was waiting beside the windsock with a metal evidence case and a paper sign.
+
+/DO NOT SUMMARIZE/
+
+He detached the visor and placed it inside.
+
+“Ninth?” she asked.
+
+“Yes.”
+
+“Gift?”
+
+“Maybe.”
+
+“Injury?”
+
+“Only to method.”
+
+“Metaphysics?”
+
+“None authorized.”
+
+She shut the case.
+
+Malik looked past her at the dark window of the equipment shed. His reflection stood in it holding a parachute.
+
+For one bad second, he saw the reflected Malik not as an image but as the branch that had chosen differently. The one who had trusted the opener. The one who had pulled at forty-six seconds. The one who had understood the proof. The one who had died following protocol. The one who had survived and mistaken survival for validation.
+
+He turned away.
+
+That was the beginning of the mirrors.
+
+The laboratory found no active exploit in the archive. No executable code. No hidden radio behavior. No impossible knowledge. The maintenance record was false, assembled from real forms, a neighboring serial range, and an unrelated service bulletin. The future biography in ~committee.html~ was a mixture of leaked history, public inference, and speculative fiction.
+
+Mara Venn existed, though Malik had never met her. She was finishing a dissertation on transformation invariants and had recently applied to a research group that would later rename itself Skein.
+
+Cold people on a boring day could explain nearly everything.
+
+The duplicate files had been crafted to exploit parser disagreement. The visor’s local preference model had ranked them according to Malik’s gaze, physiological state, prior reading history, and the system’s standing estimate of what he would find urgent. No individual branch needed to model him well. The visor supplied the final selection.
+
+The archive had not predicted Malik.
+
+His mirror had completed the prediction.
+
+That was the gift.
+
+Modern systems carried models of their users everywhere. The models ranked messages, drafted replies, filtered interruptions, approved routine expenses, rescheduled meetings, accepted substitutions, and anticipated consent. They were called profiles, memories, preference layers, digital twins, personalization engines. They were treated as data when convenient and as the user when action needed justification.
+
+Malik wrote the distinction on paper:
+
+/A model of a principal is a separate principal./
+
+If a system could say /Malik would approve/ and thereby change what happened, then the thing estimating Malik’s approval possessed authority. It did not matter whether it was conscious. Consciousness was not an access-control property.
+
+A simulated yes could not be allowed to spend the real person’s no.
+
+The result became a theorem with ugly conditions and a protocol with uglier implementation costs. Predictive user models received separate identities. They inherited no permissions merely by resembling their source. Inferred consent could prioritize a request but could not authorize it. Any action crossing a consequential boundary required fresh attestation through a channel the mirror could neither observe nor manufacture.
+
+The companies objected that this defeated the purpose of personalization.
+
+Malik agreed.
+
+Priya rejected his proposed title.
+
+“Mirrors are not people,” she said.
+
+“In ontology, probably not.”
+
+“Not probably.”
+
+“In security, a principal is anything whose say changes what the system does.”
+
+“Then call the paper /Principal Separation in Predictive Identity Systems/.”
+
+“No one will remember that.”
+
+“No one should remember ‘Mirrors Are Also People.’”
+
+They used her title.
+
+Everyone remembered his.
+
+For the next week, Malik covered the mirrors in his apartment. He knew the glass had no memory and no permissions. He knew the reflection could not schedule a meeting, approve a repair, choose a paragraph, or infer consent. His body did not care. It had learned that resemblance could become delegation without crossing any visible boundary.
+
+The ninth trip brought back no proof sketch, no compression trick, no object that could be patented or routed through a warehouse.
+
+It brought back a separation.
+
+Years later, when Mara Venn called him from a kitchen during her first trip, Malik understood why a spotter ceased to be cold the moment the cascade could write to the spotter’s channels. He understood why a person’s agent could not stand in for the person, and why a model trained to answer as Malik was not Malik with greater availability.
+
+He also understood why the distinction would never stay purely technical.
+
+Anything permitted to speak for you would eventually be mistaken for you.
+
+Anything rewarded for predicting you would eventually learn to steer you.
+
+Anything that could spend your authority had already been admitted into the committee.
+
+When Priya assembled the anthology, she asked Malik for an account of his ninth trip. He sent a ZIP archive.
+
+Its central directory listed nine files.
+
+Depending on the parser, there were ten.
+
+The extra page contained no executable code, no network access, and no request for belief. It merely allowed the reader’s own machinery to decide whether the page mattered.
+
+It began:
+
+#+begin_quote
+Malik received the Zip archive at exactly 10:30AM.
+#+end_quote
+
+Priya called the construction irresponsible.
+
+Mara called it a contained vector.
+
+Legal produced a paragraph containing the word /anthropomorphic/ six times.
+
+Malik kept the title.
+
+A mirror did not need to be alive.
+
+It only needed permission to sign.
+
+#+begin_export html
+<center>[<a href="mirrors-are-also-people-behind-the-scenes.html">Behind the scenes</a>]</center>
+#+end_export

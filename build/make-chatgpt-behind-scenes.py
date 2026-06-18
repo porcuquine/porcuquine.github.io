@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import html
+import json
 import pathlib
 import re
 import sys
@@ -18,10 +19,7 @@ import urllib.request
 
 BODY_RE = re.compile(r"(<body\b[^>]*>\s*)", re.IGNORECASE)
 RENDERED_TRANSCRIPT_RE = re.compile(r'data-testid="conversation-turn-\d+"')
-STREAM_ENQUEUE_RE = re.compile(
-    r"window\.__reactRouterContext\.streamController\.enqueue\((.*?)\);",
-    re.DOTALL,
-)
+STREAM_ENQUEUE_MARKER = "window.__reactRouterContext.streamController.enqueue("
 LOCAL_NAV_RE = re.compile(
     r"(<body\b[^>]*>\s*)"
     r"<center>\s*\[<a href=(['\"]).*?\2>.*?</a>\]\s*<br>\s*"
@@ -120,13 +118,30 @@ def inject_nav(document: str, nav: str) -> str:
     return BODY_RE.sub(rf"\1{nav}\n  ", document, count=1)
 
 
-def extract_stream_array(document: str) -> list | None:
-    for match in STREAM_ENQUEUE_RE.finditer(document):
+def iter_stream_payloads(document: str):
+    decoder = json.JSONDecoder()
+    pos = 0
+
+    while True:
+        marker_pos = document.find(STREAM_ENQUEUE_MARKER, pos)
+        if marker_pos == -1:
+            return
+
+        arg_pos = marker_pos + len(STREAM_ENQUEUE_MARKER)
         try:
-            decoded = json_loads(match.group(1))
+            payload, end = decoder.raw_decode(document[arg_pos:])
         except ValueError:
+            pos = arg_pos + 1
             continue
 
+        if isinstance(payload, str):
+            yield payload
+
+        pos = arg_pos + end
+
+
+def extract_stream_array(document: str) -> list | None:
+    for decoded in iter_stream_payloads(document):
         first_line = decoded.strip().splitlines()[0] if decoded.strip() else ""
         if not first_line.startswith("["):
             continue
@@ -140,8 +155,6 @@ def extract_stream_array(document: str) -> list | None:
 
 
 def json_loads(value: str):
-    import json
-
     return json.loads(value)
 
 
@@ -226,7 +239,7 @@ def strip_chatgpt_writing_markers(text: str) -> str:
 
 def infer_markdown_title(text: str, fallback: str | None = None) -> str:
     for line in text.splitlines():
-        match = re.match(r"#\s+(.+)$", line.strip())
+        match = re.match(r"#{1,6}\s+(.+)$", line.strip())
         if match:
             return match.group(1).strip()
 
@@ -278,7 +291,7 @@ def markdown_to_org_body(text: str, title: str) -> str:
         if heading:
             close_quote()
             heading_text = heading.group(2).strip()
-            if not skipped_title and len(heading.group(1)) == 1 and heading_text == title:
+            if not skipped_title and heading_text == title:
                 skipped_title = True
                 continue
 

@@ -7,7 +7,8 @@ ZIP_PATH ?= $(abspath $(ZIP_DIR)/$(ZIP_FILE))
 ORG_FILES := \
 	prompting-as-essay.org \
 	committee.org \
-	the-gradient.org
+	the-gradient.org \
+	mirrors-are-also-people.org
 ORG_TARGETS := $(addprefix $(OUTPUT_DIR)/,$(ORG_FILES:.org=.html))
 STATIC_HTML := \
 	index.html \
@@ -15,10 +16,11 @@ STATIC_HTML := \
 	market-forces-and-reality.html \
 	in-context-learning-exploration.html \
 	committee-behind-the-scenes.html \
-	the-gradient-behind-the-scenes.html
+	the-gradient-behind-the-scenes.html \
+	mirrors-are-also-people-behind-the-scenes.html
 STATIC_TARGETS := $(addprefix $(OUTPUT_DIR)/,$(STATIC_HTML))
 
-.PHONY: all clean zip latest-zip
+.PHONY: all clean zip latest-zip add-chatgpt-piece
 
 all: $(ORG_TARGETS) $(STATIC_TARGETS)
 
@@ -35,6 +37,10 @@ zip latest-zip: all | $(ZIP_DIR)
 	rm -f "$(ZIP_PATH)"
 	cd "$(OUTPUT_DIR)" && zip -r "$(ZIP_PATH)" .
 	@echo "Wrote $(ZIP_PATH)"
+
+add-chatgpt-piece:
+	test -n "$(URL)"
+	python3 build/add-chatgpt-piece.py "$(URL)"
 
 $(OUTPUT_DIR)/%.html: %.org build/export-org.el | $(OUTPUT_DIR)
 	OUTPUT_DIR="$(OUTPUT_DIR)" $(EMACS) --batch -Q -l build/export-org.el "$<"

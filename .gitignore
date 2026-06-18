@@ -17,5 +17,6 @@
 *.wx32fsl
 .#*
 *.~undo-tree~
+__pycache__/
 public/
 zips/
