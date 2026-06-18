@@ -31,6 +31,18 @@ To remove generated output:
 make clean
 ```
 
+## Zip Archive
+
+Generate a zip archive from the current built site:
+
+```sh
+make zip
+```
+
+This rebuilds `public/` as needed and writes a date-stamped archive to
+`zips/porcuquine-site-YYYY-MM-DD.zip`. The `zips/` directory is ignored by git.
+`make latest-zip` is an alias for the same task.
+
 ## Local Preview
 
 Build the site and serve `public/` locally:

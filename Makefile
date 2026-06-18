@@ -1,5 +1,8 @@
 EMACS ?= $(shell if [ -x /opt/homebrew/bin/emacs ]; then echo /opt/homebrew/bin/emacs; else echo emacs; fi)
 OUTPUT_DIR ?= public
+ZIP_DIR ?= zips
+ZIP_FILE ?= porcuquine-site-$(shell date +%F).zip
+ZIP_PATH ?= $(abspath $(ZIP_DIR)/$(ZIP_FILE))
 
 ORG_FILES := \
 	prompting-as-essay.org \
@@ -15,15 +18,23 @@ STATIC_HTML := \
 	the-gradient-behind-the-scenes.html
 STATIC_TARGETS := $(addprefix $(OUTPUT_DIR)/,$(STATIC_HTML))
 
-.PHONY: all clean
+.PHONY: all clean zip latest-zip
 
 all: $(ORG_TARGETS) $(STATIC_TARGETS)
 
 $(OUTPUT_DIR):
 	mkdir -p "$(OUTPUT_DIR)"
 
+$(ZIP_DIR):
+	mkdir -p "$(ZIP_DIR)"
+
 clean:
 	rm -rf "$(OUTPUT_DIR)"
+
+zip latest-zip: all | $(ZIP_DIR)
+	rm -f "$(ZIP_PATH)"
+	cd "$(OUTPUT_DIR)" && zip -r "$(ZIP_PATH)" .
+	@echo "Wrote $(ZIP_PATH)"
 
 $(OUTPUT_DIR)/%.html: %.org build/export-org.el | $(OUTPUT_DIR)
 	OUTPUT_DIR="$(OUTPUT_DIR)" $(EMACS) --batch -Q -l build/export-org.el "$<"
