@@ -7,6 +7,7 @@ GitHub Pages publishes the artifact built from `public/` by the Pages workflow.
 
 - `src/*.org`: source essays written in Org Mode
 - `src/*.html`: hand-authored static pages that are copied into the published site
+- `src/*-codex-transcript.txt`: raw Codex transcript sources for reconstructed process pages
 - `build/export-org.el`: batch Org-to-HTML exporter with minimal site defaults
 - `Makefile`: builds the publishable site into `public/`
 - `public/`: generated site artifact; ignored locally and rebuilt as needed
@@ -152,6 +153,42 @@ python3 build/add-chatgpt-piece.py "https://chatgpt.com/share/..."
 
 Use `--title`, `--slug`, or `--force` with the Python wrapper when inference or
 overwrite behavior needs to be controlled.
+
+### Codex Transcript Helper
+
+Some pieces use a reconstructed Codex transcript instead of a shared ChatGPT
+conversation. Keep the raw transcript as `src/name-codex-transcript.txt`; it is
+source material, not a public page by itself.
+
+The transcript source should contain a fenced `text` block whose turns use exact
+labels:
+
+```text
+User said:
+
+...
+
+Assistant said:
+
+Piece Title
+
+Finished piece body...
+```
+
+The publishable piece must appear as an assistant turn whose first nonblank line
+is exactly the piece title. Add it with:
+
+```sh
+make add-codex-piece \
+  TRANSCRIPT=src/name-codex-transcript.txt \
+  TITLE="Piece Title" \
+  SLUG=name
+```
+
+This creates `src/name.org` and `src/name-behind-the-scenes.html`, updates
+`Makefile`, and adds the entry to `src/index.html`. The behind-the-scenes page
+marks the provenance as a Codex transcript reconstruction rather than a
+ChatGPT-source link.
 
 ## Notes
 

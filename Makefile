@@ -1,4 +1,4 @@
-EMACS ?= $(shell if [ -x /opt/homebrew/bin/emacs ]; then echo /opt/homebrew/bin/emacs; else echo emacs; fi)
+EMACS ?= $(shell if [ -x /opt/homebrew/opt/emacs/bin/emacs ]; then echo /opt/homebrew/opt/emacs/bin/emacs; elif [ -x /opt/homebrew/bin/emacs ]; then echo /opt/homebrew/bin/emacs; else echo emacs; fi)
 SRC_DIR ?= src
 OUTPUT_DIR ?= public
 ZIP_DIR ?= zips
@@ -9,7 +9,8 @@ ORG_FILES := \
 	prompting-as-essay.org \
 	committee.org \
 	the-gradient.org \
-	mirrors-are-also-people.org
+	mirrors-are-also-people.org \
+	the-boring-day.org
 ORG_TARGETS := $(addprefix $(OUTPUT_DIR)/,$(ORG_FILES:.org=.html))
 STATIC_HTML := \
 	index.html \
@@ -18,10 +19,11 @@ STATIC_HTML := \
 	in-context-learning-exploration.html \
 	committee-behind-the-scenes.html \
 	the-gradient-behind-the-scenes.html \
-	mirrors-are-also-people-behind-the-scenes.html
+	mirrors-are-also-people-behind-the-scenes.html \
+	the-boring-day-behind-the-scenes.html
 STATIC_TARGETS := $(addprefix $(OUTPUT_DIR)/,$(STATIC_HTML))
 
-.PHONY: all clean zip latest-zip add-chatgpt-piece
+.PHONY: all clean zip latest-zip add-chatgpt-piece add-codex-piece
 
 all: $(ORG_TARGETS) $(STATIC_TARGETS)
 
@@ -42,6 +44,12 @@ zip latest-zip: all | $(ZIP_DIR)
 add-chatgpt-piece:
 	test -n "$(URL)"
 	SRC_DIR="$(SRC_DIR)" python3 build/add-chatgpt-piece.py "$(URL)"
+
+add-codex-piece:
+	test -n "$(TRANSCRIPT)"
+	test -n "$(TITLE)"
+	test -n "$(SLUG)"
+	SRC_DIR="$(SRC_DIR)" python3 build/add-codex-piece.py "$(TRANSCRIPT)" --title "$(TITLE)" --slug "$(SLUG)"
 
 $(OUTPUT_DIR)/%.html: $(SRC_DIR)/%.org build/export-org.el | $(OUTPUT_DIR)
 	OUTPUT_DIR="$(OUTPUT_DIR)" $(EMACS) --batch -Q -l build/export-org.el "$<"
