@@ -10,6 +10,7 @@ ZIP_DIR ?= zips
 ZIP_FILE ?= porcuquine-site-$(shell date +%F).zip
 ZIP_PATH ?= $(abspath $(ZIP_DIR)/$(ZIP_FILE))
 ADD_CHATGPT_ARGS := $(foreach block,$(LITERAL_WRITING_MATH),--literal-writing-math $(block))
+ADD_CHATGPT_ARGS += $(if $(SUBTITLE),--subtitle "$(SUBTITLE)")
 
 ORG_FILES := \
 	prompting-as-essay.org \
@@ -17,7 +18,8 @@ ORG_FILES := \
 	the-gradient.org \
 	mirrors-are-also-people.org \
 	the-boring-day.org \
-	the-impostor-alarm.org
+	the-impostor-alarm.org \
+	the-batch.org
 ORG_TARGETS := $(addprefix $(OUTPUT_DIR)/,$(ORG_FILES:.org=.html))
 STATIC_HTML := \
 	index.html \
@@ -29,7 +31,8 @@ BEHIND_SCENES_HTML := \
 	the-gradient-behind-the-scenes.html \
 	mirrors-are-also-people-behind-the-scenes.html \
 	the-boring-day-behind-the-scenes.html \
-	the-impostor-alarm-behind-the-scenes.html
+	the-impostor-alarm-behind-the-scenes.html \
+	the-batch-behind-the-scenes.html
 STATIC_TARGETS := $(addprefix $(OUTPUT_DIR)/,$(STATIC_HTML))
 BEHIND_SCENES_TARGETS := $(addprefix $(OUTPUT_DIR)/,$(BEHIND_SCENES_HTML))
 

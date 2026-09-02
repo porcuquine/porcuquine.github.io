@@ -67,6 +67,10 @@ def parse_args() -> argparse.Namespace:
             "multiple blocks when mirroring a known source rendering failure."
         ),
     )
+    parser.add_argument(
+        "--subtitle",
+        help="Optional Org subtitle to add below the essay title.",
+    )
     return parser.parse_args()
 
 
@@ -95,24 +99,27 @@ def last_assistant_text(helper, document: str) -> tuple[str | None, str]:
         raise ValueError("Could not extract compact ChatGPT conversation data.")
 
     extracted_title, messages = compact_share
-    text = next(
+    message = next(
         (
-            message["text"]
+            message
             for message in reversed(messages)
             if message["role"] == "assistant" and isinstance(message.get("text"), str)
         ),
         None,
     )
-    if text is None:
+    if message is None:
         raise ValueError("Could not find an assistant turn to export.")
 
+    text = str(message["text"])
+    citation_replacements = message.get("citation_replacements")
+    if not isinstance(citation_replacements, dict):
+        citation_replacements = {}
+    text = helper.replace_chatgpt_citations(text, citation_replacements)
     return extracted_title, text
 
 
-def final_writing_text(helper, text: str) -> str:
-    writing_blocks = helper.extract_chatgpt_writing_blocks(text)
-    essay_text = writing_blocks[-1] if writing_blocks else text
-    return helper.strip_chatgpt_writing_markers(essay_text)
+def final_piece_text(helper, text: str, title: str | None) -> str:
+    return helper.extract_final_piece_text(text, title)
 
 
 def append_makefile_item(path: pathlib.Path, variable: str, item: str) -> None:
@@ -175,7 +182,7 @@ def main() -> int:
     fetch_args = types.SimpleNamespace(input=None, url=args.url)
     document = helper.read_document(fetch_args)
     extracted_title, assistant_text = last_assistant_text(helper, document)
-    essay_text = final_writing_text(helper, assistant_text)
+    essay_text = final_piece_text(helper, assistant_text, args.title)
 
     title = args.title or helper.infer_markdown_title(essay_text, extracted_title)
     slug = args.slug or slugify(title)
@@ -188,7 +195,7 @@ def main() -> int:
     ensure_new_paths([org_path, transcript_path], args.force)
 
     org_path.write_text(
-        helper.render_org_essay(essay_text, title, transcript_name),
+        helper.render_org_essay(essay_text, title, transcript_name, args.subtitle),
         encoding="utf-8",
     )
 

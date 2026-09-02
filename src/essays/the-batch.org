@@ -1,0 +1,38 @@
+#+TITLE: The Batch
+#+SUBTITLE: After [[https://www.poetryfoundation.org/poems/44977/the-mill][The Mill]] by Edwin Arlington Robinson.
+#+HTML_HEAD_EXTRA: <style>.site-nav{position:fixed;top:0.5rem;left:0.5rem;z-index:1000;}</style>
+
+#+begin_export html
+<div class="site-nav">[<a href="index.html">Disordered List</a>]</div>
+#+end_export
+
+“There are no founders anymore.”\\
+He turned the crowded screen her way;\\
+The ventures came in by the score,\\
+Each funded, launched, and live that day.\\
+The money chose its own address,\\
+Then named the firm and built the site;\\
+The deck, the product, and the press\\
+Were ready by the fall of night.\\
+
+By noon his name had left the Book;\\
+His public feed was clean and bare.\\
+The launch page kept its polished look;\\
+He’d signed away his final share.\\
+No gap appeared where he had been;\\
+The engine neither slowed nor failed.\\
+The numbers held their course onscreen;\\
+The round went on; the venture scaled.\\
+
+His profile gone, she closed her own;\\
+She named the thing she wished were made.\\
+By dawn the venture stood alone;\\
+No founder helped it ply its trade.\\
+Across the world, unnumbered lights\\
+Came on wherever wants were named;\\
+The cities glittered through the nights,\\
+Too bright to tell what had been gained.
+
+#+begin_export html
+<center>[<a href="the-batch-behind-the-scenes.html">Behind the scenes</a>]</center>
+#+end_export

@@ -140,12 +140,15 @@ python3 build/make-chatgpt-behind-scenes.py \
   --back-text "Essay Title" \
   --title "Essay Title - Behind the Scenes" \
   --essay-output src/essays/name.org \
+  --essay-subtitle "Optional subtitle" \
   --essay-behind-href name-behind-the-scenes.html
 ```
 
 The Org exporter uses the final ChatGPT writing block when one is present,
-infers the title from its top-level Markdown heading, adds the site nav, and
-appends the behind-the-scenes link.
+otherwise starts the exported piece at the first Markdown heading in the final
+assistant turn. It infers the title from that heading, preserves Markdown hard
+line breaks for verse, adds the site nav, and appends the behind-the-scenes
+link.
 
 After generating the files, add any generated Org essay to `ORG_FILES` and the
 transcript page to `BEHIND_SCENES_HTML` in `Makefile` so they are built into
@@ -168,7 +171,9 @@ python3 build/add-chatgpt-piece.py "https://chatgpt.com/share/..."
 ```
 
 Use `--title`, `--slug`, or `--force` with the Python wrapper when inference or
-overwrite behavior needs to be controlled. For the rare case where a source
+overwrite behavior needs to be controlled. Use `--subtitle` with the Python
+wrapper, or `SUBTITLE="..."` with the Make target, when a piece needs a small
+source or inspiration note below the title. For the rare case where a source
 draft's raw math-rendering failure should be preserved, use
 `LITERAL_WRITING_MATH="N"` with the Make target or `--literal-writing-math N`
 with the Python wrapper.
