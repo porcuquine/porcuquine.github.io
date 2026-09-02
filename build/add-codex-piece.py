@@ -14,8 +14,19 @@ import types
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 HELPER_PATH = pathlib.Path(__file__).with_name("make-chatgpt-behind-scenes.py")
-SRC_DIR = ROOT / os.environ.get("SRC_DIR", "src")
 TURN_RE = re.compile(r"^(User|Assistant) said:\s*$")
+
+
+def env_path(name: str, default: pathlib.Path) -> pathlib.Path:
+    value = os.environ.get(name)
+    path = pathlib.Path(value) if value else default
+    return path if path.is_absolute() else ROOT / path
+
+
+SRC_DIR = env_path("SRC_DIR", pathlib.Path("src"))
+ESSAY_DIR = env_path("ESSAY_DIR", SRC_DIR / "essays")
+BEHIND_DIR = env_path("BEHIND_DIR", SRC_DIR / "behind-the-scenes")
+INDEX_PATH = env_path("INDEX_PATH", SRC_DIR / "static" / "index.html")
 
 
 def parse_args() -> argparse.Namespace:
@@ -304,6 +315,23 @@ def render_codex_transcript(
       padding-left: 1rem;
       color: #333333;
     }}
+
+    table {{
+      width: 100%;
+      border-collapse: collapse;
+    }}
+
+    th, td {{
+      border: 1px solid var(--line);
+      padding: 0.45rem 0.6rem;
+      text-align: left;
+      vertical-align: top;
+    }}
+
+    th {{
+      background: var(--code);
+      font-weight: 600;
+    }}
   </style>
 </head>
 <body>
@@ -319,7 +347,8 @@ def render_codex_transcript(
 def main() -> int:
     args = parse_args()
     helper = load_helper()
-    SRC_DIR.mkdir(parents=True, exist_ok=True)
+    ESSAY_DIR.mkdir(parents=True, exist_ok=True)
+    BEHIND_DIR.mkdir(parents=True, exist_ok=True)
 
     transcript_path = pathlib.Path(args.transcript)
     if not transcript_path.is_absolute():
@@ -332,8 +361,8 @@ def main() -> int:
     org_name = f"{args.slug}.org"
     html_name = f"{args.slug}.html"
     behind_name = f"{args.slug}-behind-the-scenes.html"
-    org_path = SRC_DIR / org_name
-    behind_path = SRC_DIR / behind_name
+    org_path = ESSAY_DIR / org_name
+    behind_path = BEHIND_DIR / behind_name
     ensure_new_paths([org_path, behind_path], args.force)
 
     org_path.write_text(
@@ -357,8 +386,8 @@ def main() -> int:
     )
 
     append_makefile_item(ROOT / "Makefile", "ORG_FILES", org_name)
-    append_makefile_item(ROOT / "Makefile", "STATIC_HTML", behind_name)
-    append_index_item(SRC_DIR / "index.html", html_name, args.title)
+    append_makefile_item(ROOT / "Makefile", "BEHIND_SCENES_HTML", behind_name)
+    append_index_item(INDEX_PATH, html_name, args.title)
 
     print(f"Added {args.title}")
     print(f"  transcript source: {transcript_path.relative_to(ROOT)}")

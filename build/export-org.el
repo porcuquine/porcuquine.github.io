@@ -3,6 +3,8 @@
 
 (setq org-export-with-author nil
       org-export-with-creator nil
+      org-export-with-section-numbers nil
+      org-export-with-toc nil
       org-export-time-stamp-file nil
       org-html-doctype "html5"
       org-html-html5-fancy t
@@ -20,6 +22,8 @@
     (with-current-buffer (find-file-noselect source)
       (let ((org-export-with-author nil)
             (org-export-with-creator nil)
+            (org-export-with-section-numbers nil)
+            (org-export-with-toc nil)
             (org-export-time-stamp-file nil)
             (org-html-doctype "html5")
             (org-html-html5-fancy t)

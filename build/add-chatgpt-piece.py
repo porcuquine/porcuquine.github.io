@@ -19,7 +19,29 @@ import unicodedata
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 HELPER_PATH = pathlib.Path(__file__).with_name("make-chatgpt-behind-scenes.py")
-SRC_DIR = ROOT / os.environ.get("SRC_DIR", "src")
+
+
+def env_path(name: str, default: pathlib.Path) -> pathlib.Path:
+    value = os.environ.get(name)
+    path = pathlib.Path(value) if value else default
+    return path if path.is_absolute() else ROOT / path
+
+
+SRC_DIR = env_path("SRC_DIR", pathlib.Path("src"))
+ESSAY_DIR = env_path("ESSAY_DIR", SRC_DIR / "essays")
+BEHIND_DIR = env_path("BEHIND_DIR", SRC_DIR / "behind-the-scenes")
+INDEX_PATH = env_path("INDEX_PATH", SRC_DIR / "static" / "index.html")
+
+
+def positive_int(value: str) -> int:
+    try:
+        number = int(value)
+    except ValueError as error:
+        raise argparse.ArgumentTypeError("must be an integer") from error
+
+    if number < 1:
+        raise argparse.ArgumentTypeError("must be 1 or greater")
+    return number
 
 
 def parse_args() -> argparse.Namespace:
@@ -33,6 +55,17 @@ def parse_args() -> argparse.Namespace:
         "--force",
         action="store_true",
         help="Overwrite existing generated essay/transcript files.",
+    )
+    parser.add_argument(
+        "--literal-writing-math",
+        action="append",
+        default=[],
+        metavar="N",
+        type=positive_int,
+        help=(
+            "Preserve raw math markup in 1-based writing block N. Repeat for "
+            "multiple blocks when mirroring a known source rendering failure."
+        ),
     )
     return parser.parse_args()
 
@@ -63,7 +96,11 @@ def last_assistant_text(helper, document: str) -> tuple[str | None, str]:
 
     extracted_title, messages = compact_share
     text = next(
-        (message["text"] for message in reversed(messages) if message["role"] == "assistant"),
+        (
+            message["text"]
+            for message in reversed(messages)
+            if message["role"] == "assistant" and isinstance(message.get("text"), str)
+        ),
         None,
     )
     if text is None:
@@ -132,7 +169,8 @@ def ensure_new_paths(paths: list[pathlib.Path], force: bool) -> None:
 def main() -> int:
     args = parse_args()
     helper = load_helper()
-    SRC_DIR.mkdir(parents=True, exist_ok=True)
+    ESSAY_DIR.mkdir(parents=True, exist_ok=True)
+    BEHIND_DIR.mkdir(parents=True, exist_ok=True)
 
     fetch_args = types.SimpleNamespace(input=None, url=args.url)
     document = helper.read_document(fetch_args)
@@ -145,8 +183,8 @@ def main() -> int:
     org_name = f"{slug}.org"
     html_name = f"{slug}.html"
     transcript_name = f"{slug}-behind-the-scenes.html"
-    org_path = SRC_DIR / org_name
-    transcript_path = SRC_DIR / transcript_name
+    org_path = ESSAY_DIR / org_name
+    transcript_path = BEHIND_DIR / transcript_name
     ensure_new_paths([org_path, transcript_path], args.force)
 
     org_path.write_text(
@@ -160,6 +198,7 @@ def main() -> int:
         back_href=html_name,
         back_text=title,
         title=f"{title} - Behind the Scenes",
+        literal_writing_math=args.literal_writing_math,
     )
     transcript_path.write_text(
         helper.render_document(document, render_args),
@@ -167,8 +206,8 @@ def main() -> int:
     )
 
     append_makefile_item(ROOT / "Makefile", "ORG_FILES", org_name)
-    append_makefile_item(ROOT / "Makefile", "STATIC_HTML", transcript_name)
-    append_index_item(SRC_DIR / "index.html", html_name, title)
+    append_makefile_item(ROOT / "Makefile", "BEHIND_SCENES_HTML", transcript_name)
+    append_index_item(INDEX_PATH, html_name, title)
 
     print(f"Added {title}")
     print(f"  essay: {org_name}")

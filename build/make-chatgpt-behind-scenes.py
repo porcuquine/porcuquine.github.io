@@ -14,6 +14,7 @@ import json
 import pathlib
 import re
 import sys
+import urllib.parse
 import urllib.request
 
 
@@ -30,7 +31,50 @@ LOCAL_NAV_RE = re.compile(
 )
 TITLE_RE = re.compile(r"(<title>)(.*?)(</title>)", re.IGNORECASE | re.DOTALL)
 INLINE_CODE_RE = re.compile(r"`([^`\n]+)`")
+CODE_PLACEHOLDER_RE = re.compile(r"\x00CODE(\d+)\x00")
+INLINE_LINK_RE = re.compile(r"\[([^\]\n]+)\]\((https?://[^)\s]+)\)")
+INLINE_MATH_RE = re.compile(r"\\\((.+?)\\\)")
 ORDERED_LIST_RE = re.compile(r"^\d+[.)]\s+(.+)$")
+ORG_EMPHASIS_PRE_CHARS = set(" \t\r\n([{'\"")
+ORG_EMPHASIS_POST_CHARS = set(" \t\r\n-.,:!?;'\"") | set(")}]")
+CHATGPT_CITATION_RE = re.compile(r"cite[^]+")
+RAW_MATH_DELIMITER_RE = re.compile(r"\\[\[\]()]")
+LITERAL_WRITING_BLOCK_RE = re.compile(
+    r'<div class="writing-block literal-math">.*?</div>', re.DOTALL
+)
+CODE_BLOCK_RE = re.compile(r"<pre\b[^>]*>.*?</pre>", re.DOTALL)
+CODE_SPAN_RE = re.compile(r"<code\b[^>]*>.*?</code>", re.DOTALL)
+LATEX_REPLACEMENTS = (
+    (r"\longrightarrow", "\u2192"),
+    (r"\rightarrow", "\u2192"),
+    (r"\Downarrow", "\u21d3"),
+    (r"\Rightarrow", "\u21d2"),
+    (r"\Leftarrow", "\u21d0"),
+    (r"\Delta", "\u0394"),
+    (r"\qquad", " "),
+    (r"\quad", " "),
+    (r"\geq", "\u2265"),
+    (r"\leq", "\u2264"),
+    (r"\ge", "\u2265"),
+    (r"\le", "\u2264"),
+    (r"\gg", "\u226b"),
+    (r"\ll", "\u226a"),
+    (r"\iff", "\u21d4"),
+    (r"\mid", " | "),
+    (r"\to", "\u2192"),
+    (r"\,", " "),
+)
+
+
+def positive_int(value: str) -> int:
+    try:
+        number = int(value)
+    except ValueError as error:
+        raise argparse.ArgumentTypeError("must be an integer") from error
+
+    if number < 1:
+        raise argparse.ArgumentTypeError("must be 1 or greater")
+    return number
 
 
 def parse_args() -> argparse.Namespace:
@@ -59,6 +103,17 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--essay-behind-href",
         help="Optional behind-the-scenes link to append to --essay-output.",
+    )
+    parser.add_argument(
+        "--literal-writing-math",
+        action="append",
+        default=[],
+        metavar="N",
+        type=positive_int,
+        help=(
+            "Preserve raw math markup in 1-based writing block N. Repeat for "
+            "multiple blocks. Use only to mirror a known source rendering failure."
+        ),
     )
     return parser.parse_args()
 
@@ -158,25 +213,103 @@ def json_loads(value: str):
     return json.loads(value)
 
 
-def render_inline_markdown(text: str) -> str:
+def latex_to_text(source: str) -> str:
+    rendered = source
+    rendered = rendered.replace(r"\\", "\n")
+    rendered = re.sub(r"\\begin\{[^{}]+\}", "", rendered)
+    rendered = re.sub(r"\\end\{[^{}]+\}", "", rendered)
+
+    previous = None
+    while previous != rendered:
+        previous = rendered
+        rendered = re.sub(r"\\text\{([^{}]*)\}", r"\1", rendered)
+
+    for latex, replacement in LATEX_REPLACEMENTS:
+        rendered = rendered.replace(latex, replacement)
+
+    unsupported = sorted(set(re.findall(r"\\[A-Za-z]+|\\.", rendered)))
+    if unsupported:
+        commands = ", ".join(unsupported)
+        raise ValueError(
+            "Unsupported LaTeX command(s) in math expression "
+            f"{source!r}: {commands}"
+        )
+
+    rendered = rendered.replace("&", "")
+    rendered = re.sub(r"_\{([^{}]+)\}", r"_\1", rendered)
+    rendered = re.sub(r"\^\{([^{}]+)\}", r"^\1", rendered)
+    rendered = rendered.replace("{", "").replace("}", "")
+    rendered = re.sub(r"\s*([⇔⇒⇐→≥≤≫≪=<>+|])\s*", r" \1 ", rendered)
+    rendered = re.sub(r"([(\[])\s+", r"\1", rendered)
+    rendered = re.sub(r"[ \t]+", " ", rendered)
+    rendered = re.sub(r" *\n *", "\n", rendered)
+    rendered = re.sub(r"\s+([)\],.;:?])", r"\1", rendered)
+    return rendered.strip()
+
+
+def render_inline_math(source: str) -> str:
+    rendered = html.escape(latex_to_text(source), quote=False)
+    return f'<span class="math math-inline">{rendered}</span>'
+
+
+def render_display_math(block_lines: list[str], render_math: bool = True) -> str | None:
+    if not render_math:
+        return None
+
+    block = "\n".join(block_lines).strip()
+    if not block.startswith(r"\[") or not block.endswith(r"\]"):
+        return None
+
+    rendered = latex_to_text(block[2:-2].strip())
+    if not rendered:
+        return None
+
+    lines = [
+        f'<span class="math-line">{html.escape(line, quote=False)}</span>'
+        for line in rendered.splitlines()
+        if line.strip()
+    ]
+    return f'<div class="math math-display">{"".join(lines)}</div>'
+
+
+def render_inline_markdown(text: str, render_math: bool = True) -> str:
     code_spans: list[str] = []
+    link_spans: list[str] = []
+    math_spans: list[str] = []
 
     def stash_code(match: re.Match[str]) -> str:
         code_spans.append(f"<code>{html.escape(match.group(1))}</code>")
         return f"\x00CODE{len(code_spans) - 1}\x00"
 
+    def stash_link(match: re.Match[str]) -> str:
+        label = html.escape(match.group(1), quote=False)
+        href = html.escape(match.group(2), quote=True)
+        link_spans.append(f'<a href="{href}">{label}</a>')
+        return f"\x00LINK{len(link_spans) - 1}\x00"
+
+    def stash_inline_math(match: re.Match[str]) -> str:
+        math_spans.append(render_inline_math(match.group(1)))
+        return f"\x00MATH{len(math_spans) - 1}\x00"
+
     rendered = INLINE_CODE_RE.sub(stash_code, text)
+    rendered = INLINE_LINK_RE.sub(stash_link, rendered)
+    if render_math:
+        rendered = INLINE_MATH_RE.sub(stash_inline_math, rendered)
     rendered = html.escape(rendered, quote=False)
-    rendered = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", rendered)
+    rendered = re.sub(r"\*\*(.+?)\*\*", r"<em>\1</em>", rendered)
     rendered = re.sub(r"(?<!\*)\*([^*\n]+)\*(?!\*)", r"<em>\1</em>", rendered)
 
     for index, code_span in enumerate(code_spans):
         rendered = rendered.replace(f"\x00CODE{index}\x00", code_span)
+    for index, link_span in enumerate(link_spans):
+        rendered = rendered.replace(f"\x00LINK{index}\x00", link_span)
+    for index, math_span in enumerate(math_spans):
+        rendered = rendered.replace(f"\x00MATH{index}\x00", math_span)
 
     return rendered
 
 
-def render_blockquote(lines: list[str]) -> str:
+def render_blockquote(lines: list[str], render_math: bool = True) -> str:
     blocks: list[str] = []
     paragraph: list[str] = []
 
@@ -188,7 +321,7 @@ def render_blockquote(lines: list[str]) -> str:
         paragraph.clear()
         if text:
             blocks.append(
-                f"<p>{render_inline_markdown(text).replace(chr(10), '<br>')}</p>"
+                f"<p>{render_inline_markdown(text, render_math).replace(chr(10), '<br>')}</p>"
             )
 
     for line in lines:
@@ -203,6 +336,54 @@ def render_blockquote(lines: list[str]) -> str:
 
     flush_quote_paragraph()
     return f"<blockquote>\n{chr(10).join(blocks)}\n</blockquote>"
+
+
+def split_markdown_table_row(line: str) -> list[str]:
+    stripped = line.strip()
+    if "|" not in stripped:
+        return []
+
+    if stripped.startswith("|"):
+        stripped = stripped[1:]
+    if stripped.endswith("|"):
+        stripped = stripped[:-1]
+
+    return [cell.strip() for cell in stripped.split("|")]
+
+
+def is_markdown_table_separator(line: str) -> bool:
+    cells = split_markdown_table_row(line)
+    return bool(cells) and all(
+        re.fullmatch(r":?-{3,}:?", cell.strip()) for cell in cells
+    )
+
+
+def render_markdown_table(lines: list[str], render_math: bool = True) -> str | None:
+    if len(lines) < 2 or not is_markdown_table_separator(lines[1]):
+        return None
+
+    header = split_markdown_table_row(lines[0])
+    rows = [split_markdown_table_row(line) for line in lines[2:]]
+    if not header or any(len(row) != len(header) for row in rows):
+        return None
+
+    header_html = "".join(
+        f"<th>{render_inline_markdown(cell, render_math)}</th>" for cell in header
+    )
+    body_rows = []
+    for row in rows:
+        cells = "".join(
+            f"<td>{render_inline_markdown(cell, render_math)}</td>" for cell in row
+        )
+        body_rows.append(f"<tr>{cells}</tr>")
+
+    body = "\n".join(body_rows)
+    return (
+        "<table>\n"
+        f"<thead><tr>{header_html}</tr></thead>\n"
+        f"<tbody>\n{body}\n</tbody>\n"
+        "</table>"
+    )
 
 
 def extract_chatgpt_writing_blocks(text: str) -> list[str]:
@@ -250,15 +431,60 @@ def markdown_inline_to_org(text: str) -> str:
     code_spans: list[str] = []
 
     def stash_code(match: re.Match[str]) -> str:
-        code_spans.append(f"~{match.group(1)}~")
+        code_spans.append(match.group(1))
         return f"\x00CODE{len(code_spans) - 1}\x00"
 
+    def render_html_inline(tag: str, value: str) -> str:
+        pieces: list[str] = []
+        pos = 0
+        for match in CODE_PLACEHOLDER_RE.finditer(value):
+            pieces.append(html.escape(value[pos : match.start()], quote=False))
+            pieces.append(
+                f"<code>{html.escape(code_spans[int(match.group(1))])}</code>"
+            )
+            pos = match.end()
+
+        pieces.append(html.escape(value[pos:], quote=False))
+        rendered = "".join(pieces).replace("@@", "&#64;&#64;")
+        return f"@@html:<{tag}>{rendered}</{tag}>@@"
+
+    def org_markup_is_safe(source: str, start: int, end: int) -> bool:
+        before = source[start - 1] if start > 0 else ""
+        after = source[end] if end < len(source) else ""
+        return (
+            (not before or before in ORG_EMPHASIS_PRE_CHARS)
+            and (not after or after in ORG_EMPHASIS_POST_CHARS)
+        )
+
+    emphasis_spans: list[str] = []
+
+    def stash_emphasis(match: re.Match[str], marker: str, tag: str) -> str:
+        content = match.group(1)
+        if org_markup_is_safe(rendered, match.start(), match.end()):
+            replacement = f"{marker}{content}{marker}"
+        else:
+            replacement = render_html_inline(tag, content)
+
+        emphasis_spans.append(replacement)
+        return f"\x00EMPH{len(emphasis_spans) - 1}\x00"
+
     rendered = INLINE_CODE_RE.sub(stash_code, text)
-    rendered = re.sub(r"\*\*(.+?)\*\*", r"*\1*", rendered)
-    rendered = re.sub(r"(?<!\*)\*([^*\n]+)\*(?!\*)", r"/\1/", rendered)
+    rendered = re.sub(
+        r"\*\*([^*\n]+?)\*\*",
+        lambda match: stash_emphasis(match, "*", "strong"),
+        rendered,
+    )
+    rendered = re.sub(
+        r"(?<!\*)\*([^*\n]+)\*(?!\*)",
+        lambda match: stash_emphasis(match, "/", "em"),
+        rendered,
+    )
+
+    for index, emphasis_span in enumerate(emphasis_spans):
+        rendered = rendered.replace(f"\x00EMPH{index}\x00", emphasis_span)
 
     for index, code_span in enumerate(code_spans):
-        rendered = rendered.replace(f"\x00CODE{index}\x00", code_span)
+        rendered = rendered.replace(f"\x00CODE{index}\x00", f"~{code_span}~")
 
     return rendered
 
@@ -377,7 +603,102 @@ def compact_get(table: list, obj, key: str, default=None):
     return default
 
 
-def extract_compact_share(document: str) -> tuple[str | None, list[dict[str, str]]] | None:
+def clean_source_url(url: str) -> str:
+    parsed = urllib.parse.urlsplit(url)
+    query = [
+        (key, value)
+        for key, value in urllib.parse.parse_qsl(parsed.query, keep_blank_values=True)
+        if not key.startswith("utm_")
+    ]
+    return urllib.parse.urlunsplit(
+        (
+            parsed.scheme,
+            parsed.netloc,
+            parsed.path,
+            urllib.parse.urlencode(query, doseq=True),
+            parsed.fragment,
+        )
+    )
+
+
+def citation_label_for_url(url: str, attribution: str | None = None) -> str:
+    if attribution and attribution.strip():
+        return attribution.strip()
+
+    host = urllib.parse.urlsplit(url).netloc
+    return host.removeprefix("www.") or "source"
+
+
+def collect_citation_replacements(table: list, metadata: dict) -> dict[str, str]:
+    replacements: dict[str, str] = {}
+    references = compact_get(table, metadata, "content_references") or []
+
+    for reference_ref in references:
+        reference = compact_ref(table, reference_ref)
+        matched_text = compact_get(table, reference, "matched_text")
+        if not isinstance(matched_text, str) or not CHATGPT_CITATION_RE.fullmatch(
+            matched_text
+        ):
+            continue
+
+        links: list[tuple[str, str]] = []
+        seen_urls: set[str] = set()
+        items = compact_get(table, reference, "items") or []
+        for item_ref in items:
+            item = compact_ref(table, item_ref)
+            url = compact_get(table, item, "url")
+            if not isinstance(url, str) or not url.startswith(("http://", "https://")):
+                continue
+
+            cleaned_url = clean_source_url(url)
+            if cleaned_url in seen_urls:
+                continue
+
+            seen_urls.add(cleaned_url)
+            attribution = compact_get(table, item, "attribution")
+            links.append(
+                (
+                    citation_label_for_url(
+                        cleaned_url, attribution if isinstance(attribution, str) else None
+                    ),
+                    cleaned_url,
+                )
+            )
+
+        if not links:
+            safe_urls = compact_get(table, reference, "safe_urls") or []
+            for url_ref in safe_urls:
+                url = compact_ref(table, url_ref)
+                if not isinstance(url, str) or not url.startswith(
+                    ("http://", "https://")
+                ):
+                    continue
+
+                cleaned_url = clean_source_url(url)
+                if cleaned_url in seen_urls:
+                    continue
+
+                seen_urls.add(cleaned_url)
+                links.append((citation_label_for_url(cleaned_url), cleaned_url))
+
+        if not links:
+            replacements[matched_text] = ""
+            continue
+
+        rendered_links = ", ".join(f"[{label}]({url})" for label, url in links)
+        replacements[matched_text] = f"({rendered_links})"
+
+    return replacements
+
+
+def replace_chatgpt_citations(text: str, replacements: dict[str, str]) -> str:
+    for marker, replacement in replacements.items():
+        text = text.replace(marker, replacement)
+
+    return CHATGPT_CITATION_RE.sub("", text)
+
+
+def extract_compact_share(document: str) -> tuple[str | None, list[dict[str, object]]] | None:
     table = extract_stream_array(document)
     if not table:
         return None
@@ -401,7 +722,7 @@ def extract_compact_share(document: str) -> tuple[str | None, list[dict[str, str
 
     title = compact_get(table, conversation, "title")
     linear = compact_get(table, conversation, "linear_conversation") or []
-    messages: list[dict[str, str]] = []
+    messages: list[dict[str, object]] = []
 
     for item_ref in linear:
         item = compact_ref(table, item_ref)
@@ -428,46 +749,88 @@ def extract_compact_share(document: str) -> tuple[str | None, list[dict[str, str
             if isinstance(part, str) and part.strip()
         )
         if text.strip():
-            messages.append({"role": role, "text": text})
+            messages.append(
+                {
+                    "role": role,
+                    "text": text,
+                    "citation_replacements": collect_citation_replacements(
+                        table, metadata
+                    ),
+                }
+            )
 
     return (title if isinstance(title, str) else None), messages
 
 
-def render_message_text(text: str) -> str:
-    text = strip_chatgpt_writing_markers(text)
+def render_message_text(
+    text: str,
+    citation_replacements: dict[str, str] | None = None,
+    literal_writing_math_blocks: set[int] | None = None,
+    writing_block_counter: list[int] | None = None,
+) -> str:
+    if citation_replacements:
+        text = replace_chatgpt_citations(text, citation_replacements)
+    else:
+        text = replace_chatgpt_citations(text, {})
+
     lines = text.replace("\r\n", "\n").replace("\r", "\n").split("\n")
     blocks: list[str] = []
     paragraph: list[str] = []
     code: list[str] = []
     in_code = False
+    in_writing = False
+    writing_render_math = True
+    paragraph_render_math = True
+    literal_writing_math_blocks = literal_writing_math_blocks or set()
+    if writing_block_counter is None:
+        writing_block_counter = [0]
 
     def flush_paragraph() -> None:
+        nonlocal paragraph_render_math
         if not paragraph:
             return
 
         block = "\n".join(paragraph).strip()
         paragraph.clear()
+        render_math = paragraph_render_math
+        paragraph_render_math = True
         if not block:
             return
 
         if block.startswith("# "):
-            blocks.append(f"<h2>{render_inline_markdown(block[2:].strip())}</h2>")
+            blocks.append(
+                f"<h2>{render_inline_markdown(block[2:].strip(), render_math)}</h2>"
+            )
             return
         if block.startswith("## "):
-            blocks.append(f"<h3>{render_inline_markdown(block[3:].strip())}</h3>")
+            blocks.append(
+                f"<h3>{render_inline_markdown(block[3:].strip(), render_math)}</h3>"
+            )
             return
         if block.startswith("### "):
-            blocks.append(f"<h4>{render_inline_markdown(block[4:].strip())}</h4>")
+            blocks.append(
+                f"<h4>{render_inline_markdown(block[4:].strip(), render_math)}</h4>"
+            )
             return
 
         block_lines = block.splitlines()
+        display_math = render_display_math(block_lines, render_math)
+        if display_math:
+            blocks.append(display_math)
+            return
+
+        table = render_markdown_table(block_lines, render_math)
+        if table:
+            blocks.append(table)
+            return
+
         if block_lines and all(line.startswith(">") for line in block_lines):
-            blocks.append(render_blockquote(block_lines))
+            blocks.append(render_blockquote(block_lines, render_math))
             return
 
         if block_lines and all(line.startswith("- ") for line in block_lines):
             items = "".join(
-                f"<li>{render_inline_markdown(line[2:].strip())}</li>"
+                f"<li>{render_inline_markdown(line[2:].strip(), render_math)}</li>"
                 for line in block_lines
             )
             blocks.append(f"<ul>{items}</ul>")
@@ -476,21 +839,47 @@ def render_message_text(text: str) -> str:
         ordered_matches = [ORDERED_LIST_RE.match(line) for line in block_lines]
         if ordered_matches and all(ordered_matches):
             items = "".join(
-                f"<li>{render_inline_markdown(match.group(1).strip())}</li>"
+                f"<li>{render_inline_markdown(match.group(1).strip(), render_math)}</li>"
                 for match in ordered_matches
                 if match is not None
             )
             blocks.append(f"<ol>{items}</ol>")
             return
 
-        rendered = render_inline_markdown(block).replace("\n", "<br>")
+        rendered = render_inline_markdown(block, render_math).replace("\n", "<br>")
         blocks.append(f"<p>{rendered}</p>")
 
     def flush_code() -> None:
         blocks.append(f"<pre><code>{html.escape(chr(10).join(code))}</code></pre>")
         code.clear()
 
+    def append_paragraph(line: str) -> None:
+        nonlocal paragraph_render_math
+        if not paragraph:
+            paragraph_render_math = writing_render_math if in_writing else True
+        paragraph.append(line)
+
     for line in lines:
+        if not in_code and line.startswith(":::writing"):
+            flush_paragraph()
+            writing_block_counter[0] += 1
+            writing_render_math = (
+                writing_block_counter[0] not in literal_writing_math_blocks
+            )
+            class_name = (
+                "writing-block" if writing_render_math else "writing-block literal-math"
+            )
+            blocks.append(f'<div class="{class_name}">')
+            in_writing = True
+            continue
+
+        if not in_code and in_writing and line.strip() == ":::":
+            flush_paragraph()
+            blocks.append("</div>")
+            in_writing = False
+            writing_render_math = True
+            continue
+
         if line.startswith("```"):
             if in_code:
                 flush_code()
@@ -503,25 +892,67 @@ def render_message_text(text: str) -> str:
         if in_code:
             code.append(line)
         elif line.strip():
-            paragraph.append(line)
+            append_paragraph(line)
         else:
             flush_paragraph()
 
     if in_code:
         flush_code()
     flush_paragraph()
+    if in_writing:
+        blocks.append("</div>")
     return "\n".join(blocks)
+
+
+def find_unconverted_math(document: str) -> list[str]:
+    stripped = LITERAL_WRITING_BLOCK_RE.sub("", document)
+    stripped = CODE_BLOCK_RE.sub("", stripped)
+    stripped = CODE_SPAN_RE.sub("", stripped)
+
+    contexts: list[str] = []
+    for match in RAW_MATH_DELIMITER_RE.finditer(stripped):
+        start = max(0, match.start() - 45)
+        end = min(len(stripped), match.end() + 45)
+        context = re.sub(r"\s+", " ", stripped[start:end]).strip()
+        contexts.append(context)
+
+    return contexts
+
+
+def validate_rendered_math(document: str) -> None:
+    contexts = find_unconverted_math(document)
+    if not contexts:
+        return
+
+    preview = "; ".join(contexts[:3])
+    if len(contexts) > 3:
+        preview += f"; ... and {len(contexts) - 3} more"
+    raise ValueError(
+        "Unconverted math delimiter(s) remain in rendered transcript. "
+        "Add converter support or mark a known source-rendering failure with "
+        f"--literal-writing-math. Context: {preview}"
+    )
 
 
 def render_static_transcript(
     title: str,
     nav: str,
-    messages: list[dict[str, str]],
+    messages: list[dict[str, object]],
+    literal_writing_math_blocks: set[int] | None = None,
 ) -> str:
     escaped_title = html.escape(title, quote=False)
     turns = []
+    writing_block_counter = [0]
     for message in messages:
-        role = message["role"]
+        role = str(message["role"])
+        text = message["text"]
+        if not isinstance(text, str):
+            continue
+
+        citation_replacements = message.get("citation_replacements")
+        if not isinstance(citation_replacements, dict):
+            citation_replacements = {}
+
         label = "You said:" if role == "user" else "ChatGPT said:"
         turns.append(
             "\n".join(
@@ -529,14 +960,19 @@ def render_static_transcript(
                     f'<section class="turn {role}">',
                     f"  <h2>{label}</h2>",
                     '  <div class="message">',
-                    render_message_text(message["text"]),
+                    render_message_text(
+                        text,
+                        citation_replacements,
+                        literal_writing_math_blocks,
+                        writing_block_counter,
+                    ),
                     "  </div>",
                     "</section>",
                 ]
             )
         )
 
-    return f"""<!doctype html>
+    document = f"""<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -587,6 +1023,18 @@ def render_static_transcript(
       max-width: 46rem;
     }}
 
+    .writing-block {{
+      margin: 1rem 0;
+      border: 1px solid var(--line);
+      border-left: 0.25rem solid #b8b8b8;
+      background: #fbfbfb;
+      padding: 1rem 1.1rem;
+    }}
+
+    .writing-block > :last-child {{
+      margin-bottom: 0;
+    }}
+
     .user .message {{
       margin-left: auto;
       border-radius: 1rem;
@@ -594,11 +1042,11 @@ def render_static_transcript(
       padding: 0.9rem 1rem;
     }}
 
-    p, ul, ol, blockquote, pre {{
+    p, ul, ol, blockquote, pre, table, .math-display {{
       margin: 0 0 1rem;
     }}
 
-    p:last-child, ul:last-child, ol:last-child, blockquote:last-child, pre:last-child {{
+    p:last-child, ul:last-child, ol:last-child, blockquote:last-child, pre:last-child, table:last-child, .math-display:last-child {{
       margin-bottom: 0;
     }}
 
@@ -629,10 +1077,44 @@ def render_static_transcript(
       font-size: 1em;
     }}
 
+    .math {{
+      font-family: ui-serif, Georgia, "Times New Roman", Times, serif;
+    }}
+
+    .math-display {{
+      text-align: center;
+      line-height: 1.7;
+    }}
+
+    .math-line {{
+      display: block;
+    }}
+
+    .math-inline {{
+      white-space: nowrap;
+    }}
+
     blockquote {{
       border-left: 0.2rem solid var(--line);
       padding-left: 1rem;
       color: #333333;
+    }}
+
+    table {{
+      width: 100%;
+      border-collapse: collapse;
+    }}
+
+    th, td {{
+      border: 1px solid var(--line);
+      padding: 0.45rem 0.6rem;
+      text-align: left;
+      vertical-align: top;
+    }}
+
+    th {{
+      background: var(--code);
+      font-weight: 600;
     }}
   </style>
 </head>
@@ -644,6 +1126,8 @@ def render_static_transcript(
 </body>
 </html>
 """
+    validate_rendered_math(document)
+    return document
 
 
 def render_document(document: str, args: argparse.Namespace) -> str:
@@ -652,7 +1136,15 @@ def render_document(document: str, args: argparse.Namespace) -> str:
     if compact_share and not RENDERED_TRANSCRIPT_RE.search(document):
         extracted_title, messages = compact_share
         title = args.title or extracted_title or "Behind the Scenes"
-        return render_static_transcript(title, nav, messages)
+        literal_writing_math_blocks = set(
+            getattr(args, "literal_writing_math", []) or []
+        )
+        return render_static_transcript(
+            title,
+            nav,
+            messages,
+            literal_writing_math_blocks,
+        )
 
     document = replace_title(document, args.title)
     return inject_nav(document, nav)
@@ -668,7 +1160,11 @@ def write_essay_output(document: str, args: argparse.Namespace) -> None:
 
     extracted_title, messages = compact_share
     last_assistant = next(
-        (message["text"] for message in reversed(messages) if message["role"] == "assistant"),
+        (
+            message["text"]
+            for message in reversed(messages)
+            if message["role"] == "assistant" and isinstance(message.get("text"), str)
+        ),
         None,
     )
     if last_assistant is None:
