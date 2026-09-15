@@ -15,6 +15,7 @@ import types
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 HELPER_PATH = pathlib.Path(__file__).with_name("make-chatgpt-behind-scenes.py")
 TURN_RE = re.compile(r"^(User|Assistant) said:\s*$")
+MARKDOWN_TITLE_RE = re.compile(r"^#{1,6}\s+(.+?)\s*#*\s*$")
 
 
 def env_path(name: str, default: pathlib.Path) -> pathlib.Path:
@@ -115,14 +116,37 @@ def ensure_new_paths(paths: list[pathlib.Path], force: bool) -> None:
         )
 
 
-def extract_fenced_transcript(document: str) -> tuple[str, str]:
+def first_top_level_turn_offset(document: str) -> int | None:
+    """Return the first role label outside a fenced code block."""
+    offset = 0
+    in_fence = False
+
+    for line in document.splitlines(keepends=True):
+        if line.lstrip().startswith("```"):
+            in_fence = not in_fence
+        elif not in_fence and TURN_RE.match(line.rstrip("\r\n")):
+            return offset
+        offset += len(line)
+
+    return None
+
+
+def extract_transcript(document: str) -> tuple[str, str, str | None]:
+    top_level_turn = first_top_level_turn_offset(document)
+    if top_level_turn is not None:
+        return (
+            document[:top_level_turn].strip(),
+            document[top_level_turn:].strip(),
+            None,
+        )
+
     fence = re.search(r"```text\n(?P<body>.*?)\n```", document, re.DOTALL)
     if not fence:
-        return ("", document.strip())
+        return ("", document.strip(), None)
 
     preface = document[: fence.start()].strip()
     transcript = fence.group("body").strip()
-    return (preface, transcript)
+    return (preface, transcript, "Assembly note")
 
 
 def parse_turns(transcript: str) -> list[dict[str, str]]:
@@ -142,15 +166,18 @@ def parse_turns(transcript: str) -> list[dict[str, str]]:
         current_role = None
         current_lines = []
 
+    in_fence = False
     for line in transcript.replace("\r\n", "\n").replace("\r", "\n").split("\n"):
-        match = TURN_RE.match(line)
-        if match:
+        match = TURN_RE.match(line) if not in_fence else None
+        if match is not None:
             flush_turn()
             current_role = match.group(1).lower()
             continue
 
         if current_role is not None:
             current_lines.append(line)
+        if line.lstrip().startswith("```"):
+            in_fence = not in_fence
 
     flush_turn()
     if not turns:
@@ -179,7 +206,10 @@ def extract_entry_text(turns: list[dict[str, str]], title: str) -> str:
         if first_index is None:
             continue
 
-        if lines[first_index].strip() == title:
+        first_line = lines[first_index].strip()
+        heading = MARKDOWN_TITLE_RE.match(first_line)
+        candidate_title = heading.group(1).strip() if heading else first_line
+        if candidate_title == title:
             return "\n".join(lines[first_index + 1 :]).strip()
 
     raise ValueError(f"Could not find assistant turn beginning with {title!r}.")
@@ -213,6 +243,7 @@ def render_codex_transcript(
     title: str,
     nav: str,
     preface: str,
+    preface_heading: str | None,
     turns: list[dict[str, str]],
 ) -> str:
     escaped_title = html.escape(f"{title} - Behind the Scenes", quote=False)
@@ -234,9 +265,14 @@ def render_codex_transcript(
 
     preface_html = ""
     if preface:
+        heading_html = (
+            f"  <h2>{html.escape(preface_heading, quote=False)}</h2>\n"
+            if preface_heading
+            else ""
+        )
         preface_html = (
             '<section class="provenance">\n'
-            "  <h2>Assembly note</h2>\n"
+            f"{heading_html}"
             f"  <div class=\"message\">{helper.render_message_text(preface)}</div>\n"
             "</section>\n"
         )
@@ -395,7 +431,7 @@ def main() -> int:
     if not transcript_path.is_absolute():
         transcript_path = ROOT / transcript_path
     document = transcript_path.read_text(encoding="utf-8")
-    preface, transcript = extract_fenced_transcript(document)
+    preface, transcript, preface_heading = extract_transcript(document)
     turns = parse_turns(transcript)
     entry_text = extract_entry_text(turns, args.title)
     if args.preserve_line_breaks:
@@ -423,6 +459,7 @@ def main() -> int:
             args.title,
             render_nav(html_name, args.title, args.source_label),
             preface,
+            preface_heading,
             turns,
         ),
         encoding="utf-8",

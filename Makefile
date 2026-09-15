@@ -22,7 +22,8 @@ ORG_FILES := \
 	the-boring-day.org \
 	the-impostor-alarm.org \
 	the-batch.org \
-	the-proof-finishes.org
+	the-proof-finishes.org \
+	until-six.org
 ORG_TARGETS := $(addprefix $(OUTPUT_DIR)/,$(ORG_FILES:.org=.html))
 STATIC_HTML := \
 	index.html \
@@ -36,7 +37,8 @@ BEHIND_SCENES_HTML := \
 	the-boring-day-behind-the-scenes.html \
 	the-impostor-alarm-behind-the-scenes.html \
 	the-batch-behind-the-scenes.html \
-	the-proof-finishes-behind-the-scenes.html
+	the-proof-finishes-behind-the-scenes.html \
+	until-six-behind-the-scenes.html
 STATIC_TARGETS := $(addprefix $(OUTPUT_DIR)/,$(STATIC_HTML))
 BEHIND_SCENES_TARGETS := $(addprefix $(OUTPUT_DIR)/,$(BEHIND_SCENES_HTML))
 

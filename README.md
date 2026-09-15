@@ -180,14 +180,13 @@ with the Python wrapper.
 
 ### Codex Transcript Helper
 
-Some pieces use a reconstructed Codex transcript instead of a shared ChatGPT
-conversation. Keep the raw transcript as `src/transcripts/name-codex-transcript.txt`;
-it is source material, not a public page by itself.
+Some pieces use a reconstructed or edited Codex transcript instead of a shared
+ChatGPT conversation. Keep the transcript under `src/transcripts/`; it is source
+material, not a public page by itself. Use `.txt` for the compact fenced format
+or `.md` when the source is an edited Markdown transcript.
 
-The transcript source should contain a fenced `text` block whose turns use exact
-labels. For excerpts from longer sessions, include an explicit marker such as
-`<context...>` at the start of the first shown user turn; the renderer escapes
-it and lays it out as a structural elision marker in the behind-the-scenes HTML.
+Two source forms are supported. A compact reconstruction may contain a fenced
+`text` block whose turns use exact labels:
 
 ```text
 User said:
@@ -201,8 +200,18 @@ Piece Title
 Finished piece body...
 ```
 
+An edited Markdown transcript may instead place those same turn labels at the
+top level, with an optional editorial note before the first turn. Fenced blocks
+inside a turn are preserved as part of that turn and are not parsed as transcript
+structure. The publishable assistant turn may begin with either the plain title
+or a Markdown title heading such as `## Piece Title`.
+
+For excerpts from longer sessions, include an explicit marker such as
+`<context...>` at the start of the first shown user turn; the renderer escapes
+it and lays it out as a structural elision marker in the behind-the-scenes HTML.
+
 The publishable piece must appear as an assistant turn whose first nonblank line
-is exactly the piece title. Add it with:
+is the piece title, either plain or as a Markdown heading. Add it with:
 
 ```sh
 make add-codex-piece \
