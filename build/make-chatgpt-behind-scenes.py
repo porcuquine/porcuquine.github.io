@@ -36,6 +36,7 @@ INLINE_LINK_RE = re.compile(r"\[([^\]\n]+)\]\((https?://[^)\s]+)\)")
 INLINE_MATH_RE = re.compile(r"\\\((.+?)\\\)")
 MARKDOWN_HEADING_RE = re.compile(r"^(#{1,6})\s+(.+?)\s*$")
 ORDERED_LIST_RE = re.compile(r"^\d+[.)]\s+(.+)$")
+CONTEXT_MARKER_RE = re.compile(r"^<context(?:\.\.\.|\s+[^<>]+)?>$", re.IGNORECASE)
 ORG_EMPHASIS_PRE_CHARS = set(" \t\r\n([{'\"")
 ORG_EMPHASIS_POST_CHARS = set(" \t\r\n-.,:!?;'\"") | set(")}]")
 CHATGPT_CITATION_RE = re.compile(r"cite[^]+")
@@ -275,6 +276,10 @@ def render_display_math(block_lines: list[str], render_math: bool = True) -> str
         if line.strip()
     ]
     return f'<div class="math math-display">{"".join(lines)}</div>'
+
+
+def render_context_marker(text: str) -> str:
+    return f'<div class="context-marker">{html.escape(text, quote=False)}</div>'
 
 
 def render_inline_markdown(text: str, render_math: bool = True) -> str:
@@ -843,6 +848,10 @@ def render_message_text(
         if not block:
             return
 
+        if CONTEXT_MARKER_RE.fullmatch(block):
+            blocks.append(render_context_marker(block))
+            return
+
         if block.startswith("# "):
             blocks.append(
                 f"<h2>{render_inline_markdown(block[2:].strip(), render_math)}</h2>"
@@ -1081,6 +1090,23 @@ def render_static_transcript(
       margin-bottom: 0;
     }}
 
+    .context-marker {{
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin: 0.15rem 0 1rem;
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 0.85rem;
+    }}
+
+    .context-marker::before,
+    .context-marker::after {{
+      content: "";
+      flex: 1;
+      border-top: 1px solid var(--line);
+    }}
+
     .user .message {{
       margin-left: auto;
       border-radius: 1rem;
@@ -1092,7 +1118,7 @@ def render_static_transcript(
       margin: 0 0 1rem;
     }}
 
-    p:last-child, ul:last-child, ol:last-child, blockquote:last-child, pre:last-child, table:last-child, .math-display:last-child {{
+    p:last-child, ul:last-child, ol:last-child, blockquote:last-child, pre:last-child, table:last-child, .math-display:last-child, .context-marker:last-child {{
       margin-bottom: 0;
     }}
 

@@ -41,6 +41,16 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Overwrite existing generated essay/transcript files.",
     )
+    parser.add_argument(
+        "--preserve-line-breaks",
+        action="store_true",
+        help="Preserve single line breaks in the extracted piece; useful for poetry.",
+    )
+    parser.add_argument(
+        "--source-label",
+        default="Codex transcript reconstruction",
+        help="Label shown in the behind-the-scenes source slot.",
+    )
     return parser.parse_args()
 
 
@@ -175,12 +185,26 @@ def extract_entry_text(turns: list[dict[str, str]], title: str) -> str:
     raise ValueError(f"Could not find assistant turn beginning with {title!r}.")
 
 
-def render_nav(back_href: str, back_text: str) -> str:
+def preserve_line_breaks(text: str) -> str:
+    lines = text.splitlines()
+    converted: list[str] = []
+
+    for index, line in enumerate(lines):
+        next_line = lines[index + 1] if index + 1 < len(lines) else ""
+        if line.strip() and next_line.strip():
+            converted.append(line.rstrip() + "  ")
+        else:
+            converted.append(line)
+
+    return "\n".join(converted)
+
+
+def render_nav(back_href: str, back_text: str, source_label: str) -> str:
     return (
         f'<center>[<a href="{html.escape(back_href, quote=True)}">'
         f"{html.escape(back_text, quote=False)}</a>]<br>"
         "[blank space (modulo truth)]<br>"
-        "[Codex transcript reconstruction]</center>"
+        f"[{html.escape(source_label, quote=False)}]</center>"
     )
 
 
@@ -275,11 +299,28 @@ def render_codex_transcript(
       padding: 0.9rem 1rem;
     }}
 
+    .context-marker {{
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin: 0.15rem 0 1rem;
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 0.85rem;
+    }}
+
+    .context-marker::before,
+    .context-marker::after {{
+      content: "";
+      flex: 1;
+      border-top: 1px solid var(--line);
+    }}
+
     p, ul, ol, blockquote, pre {{
       margin: 0 0 1rem;
     }}
 
-    p:last-child, ul:last-child, ol:last-child, blockquote:last-child, pre:last-child {{
+    p:last-child, ul:last-child, ol:last-child, blockquote:last-child, pre:last-child, .context-marker:last-child {{
       margin-bottom: 0;
     }}
 
@@ -357,6 +398,8 @@ def main() -> int:
     preface, transcript = extract_fenced_transcript(document)
     turns = parse_turns(transcript)
     entry_text = extract_entry_text(turns, args.title)
+    if args.preserve_line_breaks:
+        entry_text = preserve_line_breaks(entry_text)
 
     org_name = f"{args.slug}.org"
     html_name = f"{args.slug}.html"
@@ -378,7 +421,7 @@ def main() -> int:
         render_codex_transcript(
             helper,
             args.title,
-            render_nav(html_name, args.title),
+            render_nav(html_name, args.title, args.source_label),
             preface,
             turns,
         ),

@@ -11,6 +11,8 @@ ZIP_FILE ?= porcuquine-site-$(shell date +%F).zip
 ZIP_PATH ?= $(abspath $(ZIP_DIR)/$(ZIP_FILE))
 ADD_CHATGPT_ARGS := $(foreach block,$(LITERAL_WRITING_MATH),--literal-writing-math $(block))
 ADD_CHATGPT_ARGS += $(if $(SUBTITLE),--subtitle "$(SUBTITLE)")
+ADD_CODEX_ARGS := $(if $(PRESERVE_LINE_BREAKS),--preserve-line-breaks)
+ADD_CODEX_ARGS += $(if $(SOURCE_LABEL),--source-label "$(SOURCE_LABEL)")
 
 ORG_FILES := \
 	prompting-as-essay.org \
@@ -19,7 +21,8 @@ ORG_FILES := \
 	mirrors-are-also-people.org \
 	the-boring-day.org \
 	the-impostor-alarm.org \
-	the-batch.org
+	the-batch.org \
+	the-proof-finishes.org
 ORG_TARGETS := $(addprefix $(OUTPUT_DIR)/,$(ORG_FILES:.org=.html))
 STATIC_HTML := \
 	index.html \
@@ -32,7 +35,8 @@ BEHIND_SCENES_HTML := \
 	mirrors-are-also-people-behind-the-scenes.html \
 	the-boring-day-behind-the-scenes.html \
 	the-impostor-alarm-behind-the-scenes.html \
-	the-batch-behind-the-scenes.html
+	the-batch-behind-the-scenes.html \
+	the-proof-finishes-behind-the-scenes.html
 STATIC_TARGETS := $(addprefix $(OUTPUT_DIR)/,$(STATIC_HTML))
 BEHIND_SCENES_TARGETS := $(addprefix $(OUTPUT_DIR)/,$(BEHIND_SCENES_HTML))
 
@@ -62,7 +66,7 @@ add-codex-piece:
 	test -n "$(TRANSCRIPT)"
 	test -n "$(TITLE)"
 	test -n "$(SLUG)"
-	SRC_DIR="$(SRC_DIR)" ESSAY_DIR="$(ESSAY_DIR)" BEHIND_DIR="$(BEHIND_DIR)" INDEX_PATH="$(INDEX_PATH)" python3 build/add-codex-piece.py "$(TRANSCRIPT)" --title "$(TITLE)" --slug "$(SLUG)"
+	SRC_DIR="$(SRC_DIR)" ESSAY_DIR="$(ESSAY_DIR)" BEHIND_DIR="$(BEHIND_DIR)" INDEX_PATH="$(INDEX_PATH)" python3 build/add-codex-piece.py "$(TRANSCRIPT)" --title "$(TITLE)" --slug "$(SLUG)" $(ADD_CODEX_ARGS)
 
 $(OUTPUT_DIR)/%.html: $(ESSAY_DIR)/%.org build/export-org.el | $(OUTPUT_DIR)
 	OUTPUT_DIR="$(OUTPUT_DIR)" $(EMACS) --batch -Q -l build/export-org.el "$<"

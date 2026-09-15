@@ -8,7 +8,7 @@ GitHub Pages publishes the artifact built from `public/` by the Pages workflow.
 - `src/essays/*.org`: source essays written in Org Mode
 - `src/static/*.html`: hand-authored or legacy static pages copied into the published site
 - `src/behind-the-scenes/*.html`: generated/captured process pages copied into the published site
-- `src/transcripts/*-codex-transcript.txt`: raw Codex transcript sources for reconstructed process pages
+- `src/transcripts/*.txt`: raw transcript or excerpt sources for reconstructed process pages
 - `build/export-org.el`: batch Org-to-HTML exporter with minimal site defaults
 - `Makefile`: builds the publishable site into `public/`
 - `public/`: generated site artifact; ignored locally and rebuilt as needed
@@ -185,7 +185,9 @@ conversation. Keep the raw transcript as `src/transcripts/name-codex-transcript.
 it is source material, not a public page by itself.
 
 The transcript source should contain a fenced `text` block whose turns use exact
-labels:
+labels. For excerpts from longer sessions, include an explicit marker such as
+`<context...>` at the start of the first shown user turn; the renderer escapes
+it and lays it out as a structural elision marker in the behind-the-scenes HTML.
 
 ```text
 User said:
@@ -206,14 +208,17 @@ is exactly the piece title. Add it with:
 make add-codex-piece \
   TRANSCRIPT=src/transcripts/name-codex-transcript.txt \
   TITLE="Piece Title" \
-  SLUG=name
+  SLUG=name \
+  PRESERVE_LINE_BREAKS=1 \
+  SOURCE_LABEL="Session excerpt reconstruction"
 ```
 
 This creates `src/essays/name.org` and
 `src/behind-the-scenes/name-behind-the-scenes.html`, updates `Makefile`, and
-adds the entry to `src/static/index.html`. The behind-the-scenes page marks the
-provenance as a Codex transcript reconstruction rather than a ChatGPT-source
-link.
+adds the entry to `src/static/index.html`. Use `PRESERVE_LINE_BREAKS=1` for
+poetry or other pieces where single newlines are part of the published form.
+`SOURCE_LABEL` changes the provenance note in the behind-the-scenes page; omit
+it for the default `Codex transcript reconstruction` label.
 
 ## Notes
 
